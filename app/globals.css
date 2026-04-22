@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html, body {
+  @apply bg-white text-ink-900 antialiased;
+}
+
+body {
+  font-feature-settings: 'ss01', 'cv11';
+}
+
+a {
+  @apply underline-offset-4;
+}
+
+.prose-serif {
+  font-family: ui-serif, Georgia, Cambria, 'Times New Roman', serif;
+}
+
+/* Focus states: visible but not garish */
+:focus-visible {
+  outline: 2px solid theme('colors.accent.500');
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Subtle horizontal rules */
+hr {
+  @apply border-ink-100;
+}

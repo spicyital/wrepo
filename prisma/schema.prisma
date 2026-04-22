@@ -1,0 +1,214 @@
+// WRepo — Prisma schema
+// Keep models normalized where it pays off; avoid over-abstracting single-tenant fields.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  super_admin
+  editor
+  submitter
+}
+
+enum PaperStatus {
+  draft
+  submitted
+  approved
+  rejected
+  published
+  archived
+}
+
+enum DegreeLevel {
+  undergraduate
+  honours
+  masters
+  doctoral
+  other
+}
+
+enum DocumentType {
+  thesis
+  research_paper
+  article
+  report
+  working_paper
+  other
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String
+  role          Role      @default(submitter)
+  orcid         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  submittedPapers Paper[]     @relation("SubmittedBy")
+  authorLinks     PaperAuthor[]
+  activity        ActivityLog[]
+}
+
+model Department {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  shortCode String?  @unique
+  about     String?
+  createdAt DateTime @default(now())
+
+  papers Paper[]
+}
+
+model Advisor {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  title     String?
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  papers PaperAdvisor[]
+
+  @@unique([name, email])
+}
+
+model Author {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  orcid     String?
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  papers PaperAuthor[]
+}
+
+model Keyword {
+  id    String @id @default(cuid())
+  term  String @unique
+  slug  String @unique
+
+  papers PaperKeyword[]
+}
+
+model Paper {
+  id              String        @id @default(cuid())
+  slug            String        @unique
+  title           String
+  subtitle        String?
+  abstract        String        @db.Text
+  year            Int
+  publicationDate DateTime?
+  language        String        @default("en")
+  degreeLevel     DegreeLevel   @default(undergraduate)
+  documentType    DocumentType  @default(thesis)
+  status          PaperStatus   @default(draft)
+  license         String?       // e.g. "CC-BY-4.0"
+  doi             String?       @unique
+  embargoUntil    DateTime?
+
+  pdfPath         String?
+  pdfSize         Int?
+  coverPath       String?
+
+  searchVector    Unsupported("tsvector")?
+
+  departmentId    String?
+  department      Department?   @relation(fields: [departmentId], references: [id])
+
+  submittedById   String?
+  submittedBy     User?         @relation("SubmittedBy", fields: [submittedById], references: [id])
+
+  authors         PaperAuthor[]
+  advisors        PaperAdvisor[]
+  keywords        PaperKeyword[]
+  files           File[]
+  activity        ActivityLog[]
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  publishedAt     DateTime?
+  deletedAt       DateTime?
+
+  @@index([status])
+  @@index([year])
+  @@index([departmentId])
+  @@index([publishedAt])
+}
+
+model PaperAuthor {
+  paperId   String
+  authorId  String
+  userId    String?
+  position  Int     @default(0)
+
+  paper  Paper  @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  author Author @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id])
+
+  @@id([paperId, authorId])
+  @@index([authorId])
+}
+
+model PaperAdvisor {
+  paperId   String
+  advisorId String
+  role      String? // e.g. "primary", "secondary"
+
+  paper   Paper   @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  advisor Advisor @relation(fields: [advisorId], references: [id], onDelete: Cascade)
+
+  @@id([paperId, advisorId])
+  @@index([advisorId])
+}
+
+model PaperKeyword {
+  paperId   String
+  keywordId String
+
+  paper   Paper   @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  keyword Keyword @relation(fields: [keywordId], references: [id], onDelete: Cascade)
+
+  @@id([paperId, keywordId])
+  @@index([keywordId])
+}
+
+model File {
+  id        String   @id @default(cuid())
+  paperId   String
+  kind      String   // "pdf" | "cover" | "supplementary"
+  path      String
+  mimeType  String
+  size      Int
+  checksum  String?
+  createdAt DateTime @default(now())
+
+  paper Paper @relation(fields: [paperId], references: [id], onDelete: Cascade)
+
+  @@index([paperId])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  paperId   String?
+  action    String   // "created" | "submitted" | "approved" | "published" | etc.
+  detail    Json?
+  createdAt DateTime @default(now())
+
+  user  User?  @relation(fields: [userId], references: [id])
+  paper Paper? @relation(fields: [paperId], references: [id])
+
+  @@index([paperId])
+  @@index([userId])
+  @@index([createdAt])
+}

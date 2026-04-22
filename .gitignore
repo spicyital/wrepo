@@ -1,0 +1,38 @@
+node_modules/
+.next/
+out/
+dist/
+build/
+
+.env
+.env.local
+.env.*.local
+
+# Prisma
+prisma/*.db
+prisma/*.db-journal
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+
+# Runtime data
+storage/*
+!storage/.gitkeep
+!storage/papers/
+storage/papers/*
+!storage/papers/.gitkeep
+backups/
+data/
+
+# Next.js
+next-env.d.ts
