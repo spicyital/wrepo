@@ -1,9 +1,11 @@
 'use server'
 
 import bcrypt from 'bcryptjs'
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { db } from '@/lib/db'
+import { getClientIdentifier, takeRateLimit } from '@/lib/rate-limit'
 
 const signupSchema = z
   .object({
@@ -21,6 +23,15 @@ export async function registerUser(
   _prevState: { error?: string } | undefined,
   formData: FormData,
 ): Promise<{ error?: string }> {
+  const headerStore = headers()
+  const signupLimit = takeRateLimit(`signup:${getClientIdentifier(headerStore, 'signup')}`, {
+    max: 5,
+    windowMs: 15 * 60 * 1000,
+  })
+  if (!signupLimit.ok) {
+    return { error: 'Too many account creation attempts. Please wait a few minutes and try again.' }
+  }
+
   const parsed = signupSchema.safeParse({
     name: formData.get('name'),
     email: formData.get('email'),
@@ -38,7 +49,7 @@ export async function registerUser(
     return { error: 'An account with that email already exists.' }
   }
 
-  const role = (await db.user.count()) === 0 ? 'super_admin' : 'submitter'
+  const role = 'submitter' as const
   const passwordHash = await bcrypt.hash(parsed.data.password, 10)
 
   await db.user.create({

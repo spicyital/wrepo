@@ -10,26 +10,44 @@ export default function AboutPage() {
   return (
     <article className="mx-auto max-w-3xl px-6 py-16 prose-serif">
       <p className="text-xs uppercase tracking-widest text-ink-500">About</p>
-      <h1 className="mt-2 font-serif text-4xl text-ink-900">A quiet, credible home for student scholarship.</h1>
+      <h1 className="mt-2 font-serif text-4xl text-ink-900">A credible home for student and departmental scholarship.</h1>
 
       <div className="prose prose-ink mt-10 max-w-none text-ink-700">
         <p>
-          WRepo collects undergraduate theses, working papers, and departmental scholarship into a
-          permanent, citable archive. Our goal is modest and specific: take good student work out of
-          email threads and course folders, and give it a dignified, long-lived home.
+          WRepo is a self-hosted academic repository for undergraduate theses, student research papers,
+          working papers, and departmental scholarship. Its purpose is practical: to give publishable
+          work a stable public home with clear metadata, citation support, and a durable URL.
+        </p>
+
+        <h2 className="mt-10 font-serif text-2xl text-ink-900">What is public</h2>
+        <p>
+          WRepo is a public archive of published records. Public paper pages include structured metadata,
+          abstracts, citation formats, and machine-readable discovery surfaces such as JSON-LD,
+          <code> llms.txt</code>, <code> llms-full.txt</code>, and a limited read-only metadata API for
+          published papers.
+        </p>
+        <p>
+          Unpublished submissions are not part of the public corpus. Embargoed works may appear as
+          metadata-only records until the embargo period ends; the file itself remains unavailable during
+          that time.
+        </p>
+        <p>
+          Administrative, submission, authentication, and operational routes are not part of the public
+          repository surface.
         </p>
 
         <h2 id="policies" className="mt-10 font-serif text-2xl text-ink-900">Policies</h2>
         <ul>
-          <li><strong>Editorial review.</strong> Submissions are reviewed by faculty editors for clarity and scope before publication.</li>
-          <li><strong>Author rights.</strong> Authors retain copyright. Unless otherwise noted, works are distributed under CC BY 4.0.</li>
-          <li><strong>Embargoes.</strong> Authors and advisors may request an embargo - the record remains listed, but the file is gated until the embargo lifts.</li>
-          <li><strong>Takedowns.</strong> Takedown requests are honoured in cases of copyright concerns, privacy, or factual error.</li>
+          <li><strong>Editorial review.</strong> Submissions are reviewed before publication for scope, metadata quality, and repository readiness.</li>
+          <li><strong>Author rights.</strong> Authors retain copyright unless another agreement is stated on the record. Licensing is shown per paper.</li>
+          <li><strong>Embargoes.</strong> Authors and advisors may request an embargo. During an embargo, metadata may remain public while the file stays restricted.</li>
+          <li><strong>Takedowns and corrections.</strong> WRepo will review requests involving copyright, privacy, major factual error, or other serious repository concerns.</li>
         </ul>
 
         <h2 id="contact" className="mt-10 font-serif text-2xl text-ink-900">Contact</h2>
         <p>
-          For submission questions, takedowns, or collaboration requests, please write to
+          For submission questions, metadata corrections, takedown requests, or institutional collaboration,
+          please write to
           <a href={`mailto:${contactEmail}`}> {contactEmail}</a>.
         </p>
       </div>

@@ -15,14 +15,14 @@ export async function Header() {
 
   return (
     <header className="border-b border-ink-100 bg-white">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-6 py-4 sm:h-16 sm:flex-row sm:items-center sm:justify-between sm:py-0">
         <Link href="/" className="flex items-center gap-2 no-underline">
           <span className="font-serif text-xl font-semibold tracking-tight text-ink-900">WRepo</span>
           <span className="hidden text-xs uppercase tracking-widest text-ink-400 md:inline">
             academic archive
           </span>
         </Link>
-        <nav className="flex items-center gap-6">
+        <nav className="flex flex-wrap items-center gap-4 sm:justify-end sm:gap-6">
           {nav.map((item) => (
             <Link
               key={item.href}

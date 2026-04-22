@@ -19,7 +19,7 @@ export function SignupForm() {
         </Link>
         <h1 className="mt-4 font-serif text-3xl text-ink-900">Create account</h1>
         <p className="mt-1 text-sm text-ink-500">
-          The first account becomes the administrator; later accounts are submitters.
+          Create an account to submit work for editorial review.
         </p>
 
         <form action={formAction} className="mt-8 space-y-4">

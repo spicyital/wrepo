@@ -34,11 +34,11 @@ A small, self-hosted academic paper repository for undergraduate theses, student
 ```bash
 cp .env.example .env            # optional: npm install will create this automatically if missing
 docker compose up -d --build    # brings up db + web, runs migrations automatically
-docker compose exec web npm run admin:create   # optional if you prefer env-based bootstrap
+docker compose exec web npm run admin:create   # create the first super_admin explicitly
 docker compose exec web npm run db:seed        # optional demo papers
 ```
 
-Open <http://localhost:3000>. The first account created at `/signup` becomes `super_admin`.
+Open <http://localhost:3000>. Public signup creates `submitter` accounts only; create the first administrator explicitly with `npm run admin:create` or `ADMIN_BOOTSTRAP=1`.
 
 ---
 
@@ -123,8 +123,34 @@ Editors and super_admins bypass the `submitted` state when they submit — their
 - **File uploads** are validated by magic bytes, not just MIME type. PDFs must start with `%PDF-`; images must match PNG/JPEG/WebP/GIF signatures. Size limits: 25 MB PDF, 4 MB cover.
 - **File serving** (`/api/files/*`) looks up the owning paper and refuses to serve PDFs for unpublished, embargoed, or soft-deleted papers unless the caller is an editor. Paths are normalized and path-traversal is blocked.
 - **XSS** — `JsonLd` escapes `<` in embedded JSON-LD. Abstracts render as text, not HTML.
-- **Headers** — `next.config.mjs` sets `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`.
+- **Headers** — `next.config.mjs` sets `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`, a conservative CSP, and `noindex` headers for internal routes.
 - **Secrets** — `NEXTAUTH_SECRET` gates session tokens. Rotate rarely; rotating invalidates all active sessions.
+
+---
+
+## Public metadata vs internal APIs
+
+WRepo is a repository website with a **limited public metadata surface**, not a general API platform.
+
+Intentionally public surfaces:
+
+- canonical public paper pages under `/papers/[slug]`
+- JSON-LD embedded on public paper pages
+- `sitemap.xml`
+- `robots.txt`
+- `llms.txt`
+- `llms-full.txt`
+- `/api/papers` and `/api/papers/[slug]` for read-only metadata about published papers only
+
+Internal or restricted surfaces:
+
+- `/api/auth/*` for authentication callbacks
+- `/api/upload` for authenticated submission flows only, disabled by default unless `ENABLE_UPLOAD_API=1`
+- `/api/health` for local/container health checks only
+- `/api/files/*` for gated file delivery; public only when the underlying paper/file is actually public
+- `/admin/*`, `/submit`, and other authenticated editorial routes
+
+The public metadata API intentionally excludes secrets, environment values, admin-only data, drafts, rejected papers, archived private content, unpublished files, and embargoed files.
 
 ---
 
@@ -137,6 +163,8 @@ WRepo exposes two plain-text discovery endpoints for LLMs, agents, and external 
 
 They help agents discover the public archive without crawling admin or submission routes blindly. Both files explicitly state that only published, public, non-embargoed paper content should be treated as open corpus material, and that file URLs may still enforce access rules.
 
+The JSON API follows the same rule: it exists to expose a narrow public metadata feed for published records, not operational or administrative internals.
+
 ---
 
 ## Local development
@@ -148,6 +176,7 @@ npm install
 # 2. Environment
 cp .env.example .env
 # Edit DATABASE_URL (host `localhost`), NEXTAUTH_SECRET, ADMIN_* at minimum.
+# Local development can keep `.env.example` defaults, but production requires a real NEXTAUTH_SECRET.
 
 # 3. Start Postgres (Compose is easiest; postgres:16-alpine)
 docker compose up -d db
@@ -186,9 +215,10 @@ Minimum you must set:
 | Variable           | Notes |
 | ------------------ | ----- |
 | `DATABASE_URL`     | Postgres connection string. Use `db` host when running under Compose, `localhost` locally. |
-| `NEXTAUTH_SECRET`  | `openssl rand -base64 32`. |
+| `NEXTAUTH_SECRET`  | Required in production. Generate with `openssl rand -base64 32`. |
 | `NEXTAUTH_URL`     | Full public URL (`https://wrepo.org` in prod). |
 | `APP_URL`          | Public canonical URL used in metadata, sitemap, Open Graph. |
+| `HEALTHCHECK_TOKEN`| Required for the local/container `/api/health` probe in production deployments. |
 | `ADMIN_EMAIL`      | Optional env-based bootstrap admin login. |
 | `ADMIN_PASSWORD`   | Optional env-based bootstrap admin password. |
 
@@ -201,8 +231,11 @@ Optional:
 | `SEARCH_DRIVER`      | `postgres`  | Meilisearch/OpenSearch later. |
 | `LOG_LEVEL`          | `info`      | `debug` / `info` / `warn` / `error`. |
 | `ADMIN_BOOTSTRAP`    | `0`         | Set `1` to have the container run `create-admin` on start. |
+| `ENABLE_UPLOAD_API`  | `0`         | Keep `0` unless you intentionally need the internal `/api/upload` helper route. |
 
-Fresh databases also get a baseline set of departments via migrations, so `/submit` works before loading demo content. The first account created at `/signup` becomes the administrator automatically.
+In production, `NEXTAUTH_SECRET` must be set explicitly. Empty or placeholder values are rejected at deploy/startup time, and `docker-compose.yml` does not provide a fake production fallback.
+
+Fresh databases also get a baseline set of departments via migrations, so `/submit` works before loading demo content. Public signup creates a normal submitter account only; create the first administrator explicitly with `ADMIN_BOOTSTRAP=1` or `npm run admin:create`.
 
 See `.env.example` for the full list.
 
@@ -246,6 +279,7 @@ Short version:
 git clone https://github.com/your-org/wrepo.git && cd wrepo
 cp .env.example .env
 # Edit .env: NEXTAUTH_SECRET, NEXTAUTH_URL=https://wrepo.org, APP_URL, POSTGRES_PASSWORD, ADMIN_*
+# NEXTAUTH_SECRET is mandatory in production; blank or placeholder values fail closed.
 
 docker compose up -d --build
 docker compose exec web npm run admin:create

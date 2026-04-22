@@ -24,3 +24,10 @@ export function absoluteUrl(path: string) {
   const base = process.env.APP_URL || process.env.NEXTAUTH_URL || 'https://wrepo.org'
   return new URL(path, base).toString()
 }
+
+export function doiUrl(doi: string | null | undefined) {
+  if (!doi) return null
+  const normalized = doi.replace(/^https?:\/\/(?:dx\.)?doi\.org\//i, '').trim()
+  if (!normalized) return null
+  return `https://doi.org/${encodeURI(normalized)}`
+}

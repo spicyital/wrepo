@@ -34,7 +34,10 @@ export default async function SearchPage({
       limit: PAGE_SIZE,
       offset,
     }),
-    db.department.findMany({ orderBy: { name: 'asc' } }),
+    db.department.findMany({
+      where: { papers: { some: { status: 'published', deletedAt: null } } },
+      orderBy: { name: 'asc' },
+    }),
     db.paper.groupBy({
       by: ['year'],
       where: { status: 'published', deletedAt: null },
@@ -42,6 +45,9 @@ export default async function SearchPage({
       orderBy: { year: 'desc' },
     }),
   ])
+  const showingFrom = total === 0 ? 0 : offset + 1
+  const showingTo = Math.min(total, offset + hits.length)
+  const hasFilters = !!q || !!departmentSlug || year !== undefined || !!validDocumentType
 
   const hitIds = hits.map((h) => h.id)
   const detailed = hitIds.length
@@ -73,39 +79,66 @@ export default async function SearchPage({
     <div className="mx-auto max-w-5xl px-6 py-16">
       <p className="text-xs uppercase tracking-widest text-ink-500">Search</p>
       <h1 className="mt-2 font-serif text-4xl text-ink-900">Find across the archive.</h1>
+      <p className="mt-3 max-w-2xl text-ink-600">
+        Search published records by title, abstract, author, or keyword. Results are ordered by
+        relevance when a query is present, then by publication date.
+      </p>
       <div className="mt-6 max-w-2xl">
         <SearchBar defaultValue={q} />
       </div>
 
-      <div className="mt-6 flex flex-wrap gap-2 text-sm">
-        <Link
-          href={`/search?${new URLSearchParams({ ...(q ? { q } : {}) }).toString()}`}
-          className={chip(!departmentSlug && !year && !documentType)}
-        >
-          All results
-        </Link>
-        {departments.slice(0, 8).map((d) => (
+      <div className="mt-8 space-y-4">
+        <FilterRow label="Scope">
           <Link
-            key={d.id}
-            href={`/search?${new URLSearchParams({ ...(q ? { q } : {}), department: d.slug }).toString()}`}
-            className={chip(departmentSlug === d.slug)}
+            href={`/search?${new URLSearchParams({ ...(q ? { q } : {}) }).toString()}`}
+            className={chip(!departmentSlug && !year && !documentType)}
           >
-            {d.name}
+            All results
           </Link>
-        ))}
-        {years.slice(0, 6).map((y) => (
-          <Link
-            key={y.year}
-            href={`/search?${new URLSearchParams({ ...(q ? { q } : {}), year: String(y.year) }).toString()}`}
-            className={chip(year === y.year)}
-          >
-            {y.year}
-          </Link>
-        ))}
+          {hasFilters && (
+            <Link href={q ? `/search?${new URLSearchParams({ q }).toString()}` : '/search'} className={chip(false)}>
+              Clear filters
+            </Link>
+          )}
+        </FilterRow>
+        <FilterRow label="Department">
+          {departments.slice(0, 8).map((d) => (
+            <Link
+              key={d.id}
+              href={`/search?${new URLSearchParams({ ...(q ? { q } : {}), department: d.slug }).toString()}`}
+              className={chip(departmentSlug === d.slug)}
+            >
+              {d.name}
+            </Link>
+          ))}
+        </FilterRow>
+        <FilterRow label="Year">
+          {years.slice(0, 6).map((y) => (
+            <Link
+              key={y.year}
+              href={`/search?${new URLSearchParams({ ...(q ? { q } : {}), year: String(y.year) }).toString()}`}
+              className={chip(year === y.year)}
+            >
+              {y.year}
+            </Link>
+          ))}
+        </FilterRow>
+        <FilterRow label="Type">
+          {documentTypes.map((type) => (
+            <Link
+              key={type}
+              href={`/search?${new URLSearchParams({ ...(q ? { q } : {}), type }).toString()}`}
+              className={chip(validDocumentType === type)}
+            >
+              {type.replaceAll('_', ' ')}
+            </Link>
+          ))}
+        </FilterRow>
       </div>
 
       <p className="mt-8 text-sm text-ink-500">
-        {total.toLocaleString()} {total === 1 ? 'result' : 'results'}
+        Showing {showingFrom.toLocaleString()}-{showingTo.toLocaleString()} of {total.toLocaleString()}{' '}
+        {total === 1 ? 'result' : 'results'}
         {q && <> for <span className="text-ink-800">“{q}”</span></>}
       </p>
 
@@ -160,4 +193,13 @@ function chip(active: boolean) {
     'rounded-full border px-3 py-1 no-underline',
     active ? 'border-ink-900 bg-ink-900 text-white' : 'border-ink-200 text-ink-700 hover:border-ink-300',
   ].join(' ')
+}
+
+function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="mb-2 text-xs uppercase tracking-widest text-ink-500">{label}</div>
+      <div className="flex flex-wrap gap-2 text-sm">{children}</div>
+    </div>
+  )
 }

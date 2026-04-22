@@ -15,6 +15,7 @@ export interface PaperFormValues {
   degreeLevel: string
   documentType: string
   departmentSlug: string
+  doi?: string | null
   authors: { name: string; email?: string | null; orcid?: string | null }[]
   advisors: { name: string; email?: string | null; role?: string | null }[]
   keywords: string[]
@@ -136,7 +137,7 @@ export function PaperForm({
         label="Authors"
         rows={authors}
         setRows={setAuthors}
-        hint="At least one author is required."
+        hint="List authors in publication order. Add ORCID identifiers when available."
         withOrcid
       />
 
@@ -144,29 +145,32 @@ export function PaperForm({
         label="Advisors"
         rows={advisors}
         setRows={setAdvisors}
-        hint="Optional. Use for thesis advisors / supervisors."
+        hint="Optional. Include advisors, supervisors, or readers exactly as they should appear publicly."
         withRole
       />
 
-      <Field label="Keywords" hint="Comma-separated.">
+      <Field label="Keywords" hint="Comma-separated. Use 3-8 precise terms that readers would actually search for.">
         <Input value={keywords} onChange={(e) => setKeywords(e.target.value)} />
       </Field>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Field label="License" hint="e.g. CC-BY-4.0">
+      <div className="grid gap-6 md:grid-cols-3">
+        <Field label="DOI" hint="Optional. Enter a DOI or doi.org URL if one has already been assigned.">
+          <Input name="doi" defaultValue={initial?.doi ?? ''} placeholder="10.1234/example.2026.001" />
+        </Field>
+        <Field label="License" hint="e.g. CC-BY-4.0. Leave blank only if rights are reserved or undecided.">
           <Input name="license" defaultValue={initial?.license ?? ''} />
         </Field>
-        <Field label="Embargo until" hint="Optional. Paper remains listed but PDF is gated.">
+        <Field label="Embargo until" hint="Optional. Metadata stays public, but the file remains unavailable until this date.">
           <Input name="embargoUntil" type="date" defaultValue={embargoUntil} />
         </Field>
       </div>
 
       {includeFile && (
         <div className="grid gap-6 md:grid-cols-2">
-          <Field label="PDF file" hint="Max ~25 MB. PDF only.">
+          <Field label="PDF file" hint="Required. Max 25 MB. PDF only.">
             <input name="pdf" type="file" accept="application/pdf" required={pdfRequired} />
           </Field>
-          <Field label="Cover image" hint="Optional. JPG or PNG.">
+          <Field label="Cover image" hint="Optional. Used for link previews when provided.">
             <input name="cover" type="file" accept="image/*" />
           </Field>
         </div>

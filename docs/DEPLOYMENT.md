@@ -76,12 +76,15 @@ Edit `.env` and set these values before first deploy:
 - `NEXTAUTH_URL=https://wrepo.org`
 - `NEXTAUTH_URL_INTERNAL=http://web:3000`
 - `POSTGRES_PASSWORD=<strong random password>`
-- `NEXTAUTH_SECRET=<openssl rand -base64 32>`
+- `NEXTAUTH_SECRET=<openssl rand -base64 32>` and do not leave it blank or placeholder
+- `HEALTHCHECK_TOKEN=<openssl rand -hex 32>`
 - `ADMIN_EMAIL=<your email>`
 - `ADMIN_PASSWORD=<strong bootstrap password>`
 - `ADMIN_BOOTSTRAP=1` for first boot only, then set it back to `0`
 - `STORAGE_HOST_PATH=./storage` or an absolute host path
 - `BACKUP_ROOT=./backups` or an absolute host path
+
+`NEXTAUTH_SECRET` is mandatory in production. Empty or placeholder values are rejected by the deploy script and by container startup. `docker-compose.yml` does not provide a fake production fallback.
 
 Generate strong secrets:
 
@@ -140,20 +143,20 @@ What it does:
 
 - Builds the `web` image
 - Starts `db`, `web`, and `cloudflared`
-- Waits for `http://127.0.0.1:${WEB_PORT}/api/health`
+- Waits for the token-protected local health probe at `http://127.0.0.1:${WEB_PORT}/api/health`
 - Prints service status
 
 If you prefer the manual equivalent:
 
 ```bash
 docker compose --profile tunnel up -d --build --remove-orphans
-curl -fsS http://127.0.0.1:3000/api/health
+curl -fsS -H "X-WRepo-Health-Token: $HEALTHCHECK_TOKEN" http://127.0.0.1:3000/api/health
 docker compose --profile tunnel ps
 ```
 
 ## 6. First boot tasks
 
-If `ADMIN_BOOTSTRAP=1`, the container will upsert the admin user on boot.
+If `ADMIN_BOOTSTRAP=1`, the container will upsert the admin user on boot. `ADMIN_EMAIL` and `ADMIN_PASSWORD` must both be set. Public signup creates a normal submitter account only, and bootstrap misconfiguration is treated as a blocking startup error.
 
 After the first successful deploy:
 
@@ -168,12 +171,14 @@ If you prefer a manual admin bootstrap:
 docker compose exec web npm run admin:create
 ```
 
+Use either `ADMIN_BOOTSTRAP=1` for first boot or the admin creation script. Do not rely on public signup for admin access.
+
 ## 7. Validate the live site
 
 On the server:
 
 ```bash
-curl -fsS http://127.0.0.1:3000/api/health
+curl -fsS -H "X-WRepo-Health-Token: $HEALTHCHECK_TOKEN" http://127.0.0.1:3000/api/health
 docker compose --profile tunnel ps
 docker compose logs web --tail 80
 docker compose logs cloudflared --tail 80
@@ -188,6 +193,11 @@ Public checks:
 - `https://wrepo.org/llms-full.txt`
 - `https://wrepo.org/sitemap.xml`
 - `https://wrepo.org/robots.txt`
+
+Notes:
+
+- `/api/health` is a local/container health probe, not a public-facing endpoint.
+- `/api/upload` and `/api/auth/*` are internal authenticated application routes and are not part of the public discovery surface.
 
 ## 8. Ports and exposure
 

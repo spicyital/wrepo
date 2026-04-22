@@ -16,7 +16,7 @@ docker compose logs db --tail 80
 Check app health:
 
 ```bash
-curl -fsS http://127.0.0.1:3000/api/health
+curl -fsS -H "X-WRepo-Health-Token: $HEALTHCHECK_TOKEN" http://127.0.0.1:3000/api/health
 ```
 
 ## Backups
@@ -144,13 +144,22 @@ sudo systemctl status docker
 ## Security notes
 
 - Use long random values for `POSTGRES_PASSWORD` and `NEXTAUTH_SECRET`
+- Use a long random `HEALTHCHECK_TOKEN` for the local/container probe
+- `NEXTAUTH_SECRET` is required in production; empty or placeholder values are rejected at deploy/startup time
+- `docker-compose.yml` does not provide a fake production fallback for `NEXTAUTH_SECRET`
 - Set `ADMIN_BOOTSTRAP=1` only for first boot or deliberate password reset windows
+- If `ADMIN_BOOTSTRAP=1`, `ADMIN_EMAIL` and `ADMIN_PASSWORD` are both required
+- Treat admin bootstrap failure as a blocking startup error, not a warning
+- Public signup creates `submitter` accounts only; create the first admin explicitly with `ADMIN_BOOTSTRAP=1` or `npm run admin:create`
 - Change it back to `0` after bootstrap
 - Keep `.env` readable only by the deploy user
 - Keep Docker ports bound to `127.0.0.1`
 - Do not expose PostgreSQL publicly
 - Do not create direct public DNS records to the home server for the app
 - If Cloudflare Tunnel is in front, the origin should accept only local traffic and tunnel egress
+- Treat `/api/health` as a local-only operational probe, not a public product route
+- Treat `/api/auth/*` and `/api/upload` as internal application routes, not public APIs
+- Treat `/api/papers` as the intentionally public JSON metadata surface, limited to published records
 
 ## Common failure cases
 
@@ -185,13 +194,15 @@ Checks:
 
 ```bash
 docker compose logs web --tail 120
-curl -fsS http://127.0.0.1:3000/api/health
+curl -fsS -H "X-WRepo-Health-Token: $HEALTHCHECK_TOKEN" http://127.0.0.1:3000/api/health
 ```
 
 Typical causes:
 
 - bad `DATABASE_URL`
 - failed Prisma migration
+- blank or placeholder `NEXTAUTH_SECRET` in production
+- `ADMIN_BOOTSTRAP=1` without `ADMIN_EMAIL` or `ADMIN_PASSWORD`
 - storage mount is missing or not writable
 - `NEXTAUTH_URL` mismatch after domain changes
 
@@ -265,7 +276,7 @@ If you later switch to direct-origin mode:
 Use this after every deploy or rollback:
 
 - `docker compose --profile tunnel ps` shows `web`, `db`, and `cloudflared` healthy/running
-- `curl -fsS http://127.0.0.1:3000/api/health` succeeds
+- `curl -fsS -H "X-WRepo-Health-Token: $HEALTHCHECK_TOKEN" http://127.0.0.1:3000/api/health` succeeds
 - home page loads at `https://wrepo.org/`
 - login works
 - paper submission works

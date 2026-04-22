@@ -8,7 +8,7 @@ import { PdfPreview } from '@/components/PdfPreview'
 import { CitationBlock } from '@/components/CitationBlock'
 import { PaperCard } from '@/components/PaperCard'
 import { JsonLd } from '@/components/JsonLd'
-import { absoluteUrl, formatDate, truncate } from '@/lib/utils'
+import { absoluteUrl, doiUrl, formatDate, truncate } from '@/lib/utils'
 import { getRelatedPapers } from '@/lib/papers/related'
 
 export const dynamic = 'force-dynamic'
@@ -20,6 +20,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   })
   if (!paper) return { title: 'Not found' }
   const description = truncate(paper.abstract, 200)
+  const coverImage = paper.coverPath && (!paper.embargoUntil || paper.embargoUntil <= new Date())
+    ? [`${absoluteUrl(`/api/files/${encodeURI(paper.coverPath)}`)}`]
+    : undefined
   return {
     title: paper.title,
     description,
@@ -30,6 +33,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       description,
       url: absoluteUrl(`/papers/${paper.slug}`),
       authors: paper.authors.map((a) => a.author.name),
+      publishedTime: (paper.publicationDate ?? paper.publishedAt)?.toISOString(),
+      images: coverImage,
     },
   }
 }
@@ -49,6 +54,9 @@ export default async function PaperPage({ params }: { params: { slug: string } }
   const pdfUrl = paper.pdfPath ? storage().url(paper.pdfPath) : null
   const embargoed = paper.embargoUntil && paper.embargoUntil > new Date()
   const canonical = absoluteUrl(`/papers/${paper.slug}`)
+  const publicationDate = paper.publicationDate ?? paper.publishedAt ?? paper.updatedAt
+  const doiHref = doiUrl(paper.doi)
+  const publicPdfUrl = pdfUrl && !embargoed ? pdfUrl : null
 
   const related = await getRelatedPapers(paper.id, 4)
 
@@ -58,10 +66,17 @@ export default async function PaperPage({ params }: { params: { slug: string } }
     headline: paper.title,
     abstract: paper.abstract,
     author: paper.authors.map((a) => ({ '@type': 'Person', name: a.author.name })),
-    datePublished: paper.publishedAt?.toISOString(),
+    datePublished: publicationDate.toISOString(),
+    dateModified: paper.updatedAt.toISOString(),
     inLanguage: paper.language,
-    keywords: paper.keywords.map((k) => k.keyword.term).join(', '),
+    keywords: paper.keywords.map((k) => k.keyword.term),
     url: canonical,
+    identifier: paper.doi ? { '@type': 'PropertyValue', propertyID: 'DOI', value: paper.doi } : undefined,
+    sameAs: doiHref ?? undefined,
+    isAccessibleForFree: !embargoed,
+    encoding: publicPdfUrl
+      ? { '@type': 'MediaObject', encodingFormat: 'application/pdf', contentUrl: absoluteUrl(publicPdfUrl) }
+      : undefined,
     isPartOf: paper.department ? { '@type': 'Periodical', name: paper.department.name } : undefined,
   }
 
@@ -118,11 +133,24 @@ export default async function PaperPage({ params }: { params: { slug: string } }
       </section>
 
       <dl className="mt-10 grid gap-x-8 gap-y-4 border-y border-ink-100 py-6 text-sm md:grid-cols-2">
-        <Meta label="Published" value={formatDate(paper.publishedAt ?? paper.updatedAt)} />
+        <Meta label="Publication date" value={formatDate(publicationDate)} />
         <Meta label="Language" value={paper.language.toUpperCase()} />
         <Meta label="Degree level" value={<span className="capitalize">{paper.degreeLevel}</span>} />
         <Meta label="License" value={paper.license ?? 'All rights reserved'} />
-        {paper.doi && <Meta label="DOI" value={paper.doi} />}
+        {paper.doi && (
+          <Meta
+            label="DOI"
+            value={
+              doiHref ? (
+                <a href={doiHref} className="text-accent-700 hover:text-accent-800">
+                  {paper.doi}
+                </a>
+              ) : (
+                paper.doi
+              )
+            }
+          />
+        )}
       </dl>
 
       {paper.keywords.length > 0 && (
@@ -175,6 +203,7 @@ export default async function PaperPage({ params }: { params: { slug: string } }
             title={paper.title}
             department={paper.department?.name}
             url={canonical}
+            doi={paper.doi}
           />
         </div>
       </section>

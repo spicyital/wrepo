@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { doiUrl } from '@/lib/utils'
 
 interface CitationInput {
   authors: { name: string }[]
@@ -9,6 +10,7 @@ interface CitationInput {
   title: string
   department?: string | null
   url: string
+  doi?: string | null
 }
 
 function apa(c: CitationInput) {
@@ -21,23 +23,25 @@ function apa(c: CitationInput) {
     })
     .join(', ')
   const dept = c.department ? `${c.department}, ` : ''
-  return `${authors} (${c.year}). ${c.title}. ${dept}WRepo. ${c.url}`
+  return `${authors} (${c.year}). ${c.title}. ${dept}WRepo. ${doiUrl(c.doi) ?? c.url}`
 }
 
 function mla(c: CitationInput) {
   const authors = c.authors.map((a) => a.name).join(', ')
-  return `${authors}. "${c.title}." WRepo, ${c.year}, ${c.url}.`
+  return `${authors}. "${c.title}." WRepo, ${c.year}, ${doiUrl(c.doi) ?? c.url}.`
 }
 
 function bibtex(c: CitationInput) {
   const first = c.authors[0]?.name.split(/\s+/).pop()?.toLowerCase() ?? 'anon'
   const key = `${first}${c.year}`
   const authorList = c.authors.map((a) => a.name).join(' and ')
+  const doiLine = c.doi ? `,\n  doi = {${c.doi}}` : ''
   return `@misc{${key},
   title = {${c.title}},
   author = {${authorList}},
   year = {${c.year}},
   howpublished = {\\url{${c.url}}},
+  url = {${c.url}}${doiLine},
   note = {WRepo}
 }`
 }

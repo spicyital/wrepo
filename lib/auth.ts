@@ -2,6 +2,7 @@ import type { NextAuthOptions } from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { db } from './db'
+import { getClientIdentifier, takeRateLimit } from './rate-limit'
 
 declare module 'next-auth' {
   interface Session {
@@ -37,9 +38,19 @@ export const authOptions: NextAuthOptions = {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
       },
-      async authorize(creds) {
+      async authorize(creds, req) {
         if (!creds?.email || !creds?.password) return null
-        const user = await db.user.findUnique({ where: { email: creds.email.toLowerCase() } })
+        const email = creds.email.toLowerCase()
+        const loginLimit = takeRateLimit(
+          `login:${getClientIdentifier(req?.headers, 'login')}:${email}`,
+          {
+            max: 10,
+            windowMs: 15 * 60 * 1000,
+          },
+        )
+        if (!loginLimit.ok) return null
+
+        const user = await db.user.findUnique({ where: { email } })
         if (!user) return null
         const ok = await bcrypt.compare(creds.password, user.passwordHash)
         if (!ok) return null

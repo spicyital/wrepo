@@ -30,6 +30,9 @@ export function Footer() {
         <div>
           <div className="mb-3 text-xs uppercase tracking-widest text-ink-400">Machine-readable</div>
           <ul className="space-y-2">
+            <li><a href="/llms.txt" className="no-underline hover:text-ink-900">llms.txt</a></li>
+            <li><a href="/llms-full.txt" className="no-underline hover:text-ink-900">llms-full.txt</a></li>
+            <li><a href="/api/papers" className="no-underline hover:text-ink-900">Published metadata API</a></li>
             <li><a href="/sitemap.xml" className="no-underline hover:text-ink-900">Sitemap</a></li>
             <li><a href="/robots.txt" className="no-underline hover:text-ink-900">robots.txt</a></li>
           </ul>

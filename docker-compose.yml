@@ -38,12 +38,14 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-wrepo}:${POSTGRES_PASSWORD:-wrepo}@db:5432/${POSTGRES_DB:-wrepo}?schema=public
       NEXTAUTH_URL: ${NEXTAUTH_URL:-https://wrepo.org}
       NEXTAUTH_URL_INTERNAL: ${NEXTAUTH_URL_INTERNAL:-http://web:3000}
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-dev-only-change-me-for-local-docker}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      HEALTHCHECK_TOKEN: ${HEALTHCHECK_TOKEN}
       APP_URL: ${APP_URL:-https://wrepo.org}
       APP_NAME: ${APP_NAME:-WRepo}
-      APP_DESCRIPTION: ${APP_DESCRIPTION:-A self-hosted academic paper repository}
+      APP_DESCRIPTION: ${APP_DESCRIPTION:-Public repository for undergraduate theses, student research papers, working papers, and departmental scholarship.}
       STORAGE_DRIVER: local
       STORAGE_LOCAL_PATH: /app/storage
+      ENABLE_UPLOAD_API: ${ENABLE_UPLOAD_API:-0}
       SEARCH_DRIVER: postgres
       LOG_LEVEL: ${LOG_LEVEL:-info}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}

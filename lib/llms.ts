@@ -30,7 +30,8 @@ function formatPatterns(patterns: RoutePattern[]) {
 
 export const siteName = process.env.APP_NAME ?? 'WRepo'
 export const siteDescription =
-  process.env.APP_DESCRIPTION ?? 'A self-hosted academic paper repository'
+  process.env.APP_DESCRIPTION ??
+  'Public repository for undergraduate theses, student research papers, working papers, and departmental scholarship.'
 export const siteBaseUrl = joinUrl('/').replace(/\/$/, '')
 export const contactEmail = 'contact@wrepo.org'
 export const aboutUrl = joinUrl('/about')
@@ -41,7 +42,7 @@ export const llmsProject = {
   description: siteDescription,
   baseUrl: siteBaseUrl,
   contains:
-    'Undergraduate theses, working papers, research papers, and departmental scholarship with public metadata and editorial review.',
+    'Undergraduate theses, working papers, research papers, and departmental scholarship with public metadata, citation support, and editorial review.',
 }
 
 export const llmsPublicEntryPoints: Link[] = [
@@ -76,12 +77,12 @@ export const llmsPublicJsonEndpoints: Link[] = [
   {
     label: 'Paper list/search API',
     href: joinUrl('/api/papers'),
-    notes: 'Published paper metadata; supports q, limit, offset, department, year, type',
+    notes: 'Limited public metadata for published papers only; supports q, limit, offset, department, year, type',
   },
   {
     label: 'Paper detail API',
-    href: joinUrl('/api/papers/[id-or-slug]'),
-    notes: 'Published paper metadata by paper id or slug',
+    href: joinUrl('/api/papers/[slug]'),
+    notes: 'Published paper metadata by canonical public paper slug',
   },
 ]
 
@@ -102,14 +103,16 @@ export const llmsContentRules = [
   'Treat only published, non-deleted, non-embargoed papers as open public corpus content.',
   'Public listing or metadata pages may mention embargoed records, but embargoed files and gated file URLs are not open-access corpus content.',
   'Admin, submission, login, signup, and authentication routes are not part of the public repository corpus.',
+  'The public metadata API is intentionally limited to published paper records and is not a general application API.',
   'File URLs under /api/files/[...path] may enforce access and embargo rules; do not assume they are universally fetchable.',
   'Prefer canonical paper pages at /papers/[slug] and public JSON endpoints over admin or authenticated views.',
 ]
 
 export const llmsAgentNotes = [
   'Use /browse for curated navigation and /search for free-text retrieval.',
-  'Use /api/papers for machine ingestion of published metadata and /api/papers/[id-or-slug] for detail lookups.',
+  'Use /api/papers for machine ingestion of published metadata and /api/papers/[slug] for detail lookups.',
   'For citations, public paper pages expose APA, MLA, and BibTeX formats and embed scholarly JSON-LD metadata.',
+  'Where available, public records may include DOI values and DOI URLs alongside canonical WRepo URLs.',
   'If a paper detail response marks embargoed=true or pdfUrl=null, treat the file as unavailable for public retrieval.',
 ]
 
@@ -136,11 +139,11 @@ export const llmsRoutePatterns: RoutePattern[] = [
   { pattern: '/papers/[slug]', purpose: 'Canonical public paper detail page' },
   {
     pattern: '/api/papers?limit=...&offset=...&q=...&department=...&year=...&type=...',
-    purpose: 'Public JSON list/search endpoint',
+    purpose: 'Limited public JSON metadata endpoint for published paper records',
   },
   {
-    pattern: '/api/papers/[id-or-slug]',
-    purpose: 'Public JSON detail endpoint by paper id or slug',
+    pattern: '/api/papers/[slug]',
+    purpose: 'Public JSON detail endpoint by canonical public paper slug',
   },
   {
     pattern: '/api/files/[...path]',
@@ -157,17 +160,19 @@ export const llmsPageTypes = [
 ]
 
 export const llmsPaperMetadataFields = [
-  'id',
   'slug',
   'title',
   'subtitle',
   'abstract',
   'year',
+  'publicationDate',
   'publishedAt',
   'language',
   'documentType',
   'degreeLevel',
   'license',
+  'doi',
+  'doiUrl',
   'department.name',
   'department.slug',
   'authors[].name',
@@ -177,6 +182,7 @@ export const llmsPaperMetadataFields = [
   'keywords[]',
   'embargoed',
   'pdfUrl',
+  'url',
 ]
 
 export const llmsSearchFilters = [
@@ -237,7 +243,7 @@ export function formatLlmsFullText() {
     formatSection('Citation and metadata availability', [
       '- Paper pages expose APA, MLA, and BibTeX citation formats.',
       '- Paper pages also publish JSON-LD scholarly metadata for structured discovery.',
-      '- Public API detail responses expose embargo status and pdfUrl availability.',
+      '- Public API detail responses expose embargo status, DOI metadata when available, and pdfUrl availability.',
     ]),
     formatSection('Content and access rules', [
       '- Index or ingest only published, non-deleted, non-embargoed papers as open public corpus content.',

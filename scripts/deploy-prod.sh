@@ -10,8 +10,29 @@ set -a
 . ./.env
 set +a
 
+is_placeholder_secret() {
+  case "${1:-}" in
+    ""|dev-only-change-me-before-production|dev-only-change-me-for-local-docker)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
 if [[ -z "${CLOUDFLARE_TUNNEL_TOKEN:-}" ]]; then
   echo "CLOUDFLARE_TUNNEL_TOKEN is required for the production tunnel deployment."
+  exit 1
+fi
+
+if is_placeholder_secret "${NEXTAUTH_SECRET:-}"; then
+  echo "NEXTAUTH_SECRET must be set to a non-placeholder value before production deploy."
+  exit 1
+fi
+
+if [[ "${ADMIN_BOOTSTRAP:-0}" == "1" ]] && { [[ -z "${ADMIN_EMAIL:-}" ]] || [[ -z "${ADMIN_PASSWORD:-}" ]]; }; then
+  echo "ADMIN_BOOTSTRAP=1 requires ADMIN_EMAIL and ADMIN_PASSWORD."
   exit 1
 fi
 
@@ -22,7 +43,7 @@ docker compose --profile tunnel up -d --build --remove-orphans
 
 echo "[wrepo] waiting for health endpoint on 127.0.0.1:${WEB_PORT}..."
 for attempt in $(seq 1 30); do
-  if curl -fsS "http://127.0.0.1:${WEB_PORT}/api/health" >/dev/null; then
+  if curl -fsS -H "X-WRepo-Health-Token: ${HEALTHCHECK_TOKEN}" "http://127.0.0.1:${WEB_PORT}/api/health" >/dev/null; then
     echo "[wrepo] application is healthy"
     docker compose --profile tunnel ps
     exit 0

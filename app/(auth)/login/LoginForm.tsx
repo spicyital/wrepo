@@ -33,7 +33,7 @@ export function LoginForm() {
           ← WRepo
         </Link>
         <h1 className="mt-4 font-serif text-3xl text-ink-900">Sign in</h1>
-        <p className="mt-1 text-sm text-ink-500">Editors and submitters only.</p>
+        <p className="mt-1 text-sm text-ink-500">For authors, editors, and repository staff.</p>
 
         {registered && (
           <div className="mt-6 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">

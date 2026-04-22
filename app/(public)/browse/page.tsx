@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { db } from '@/lib/db'
+import { SearchBar } from '@/components/SearchBar'
 
 export const metadata: Metadata = {
   title: 'Browse',
@@ -12,6 +13,7 @@ export const dynamic = 'force-dynamic'
 export default async function BrowseIndex() {
   const [departments, years, authors, advisors, keywords] = await Promise.all([
     db.department.findMany({
+      where: { papers: { some: { status: 'published', deletedAt: null } } },
       orderBy: { name: 'asc' },
       include: { _count: { select: { papers: { where: { status: 'published', deletedAt: null } } } } },
     }),
@@ -21,9 +23,21 @@ export default async function BrowseIndex() {
       _count: true,
       orderBy: { year: 'desc' },
     }),
-    db.author.findMany({ orderBy: { name: 'asc' }, take: 100 }),
-    db.advisor.findMany({ orderBy: { name: 'asc' }, take: 100 }),
-    db.keyword.findMany({ orderBy: { term: 'asc' }, take: 100 }),
+    db.author.findMany({
+      where: { papers: { some: { paper: { status: 'published', deletedAt: null } } } },
+      orderBy: { name: 'asc' },
+      take: 100,
+    }),
+    db.advisor.findMany({
+      where: { papers: { some: { paper: { status: 'published', deletedAt: null } } } },
+      orderBy: { name: 'asc' },
+      take: 100,
+    }),
+    db.keyword.findMany({
+      where: { papers: { some: { paper: { status: 'published', deletedAt: null } } } },
+      orderBy: { term: 'asc' },
+      take: 100,
+    }),
   ])
 
   return (
@@ -31,8 +45,12 @@ export default async function BrowseIndex() {
       <p className="text-xs uppercase tracking-widest text-ink-500">Browse</p>
       <h1 className="mt-2 font-serif text-4xl text-ink-900">Find a paper.</h1>
       <p className="mt-3 max-w-2xl text-ink-600">
-        Browse by facet. For full-text queries, use <Link href="/search" className="text-accent-600">search</Link>.
+        Browse by department, year, author, advisor, type, or keyword. For full-text queries, use{' '}
+        <Link href="/search" className="text-accent-600">search</Link>.
       </p>
+      <div className="mt-6 max-w-2xl">
+        <SearchBar />
+      </div>
 
       <Facet title="Departments">
         <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">

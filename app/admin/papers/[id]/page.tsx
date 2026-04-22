@@ -34,6 +34,7 @@ export default async function AdminPaperEditPage({ params }: { params: { id: str
     degreeLevel: paper.degreeLevel,
     documentType: paper.documentType,
     departmentSlug: paper.department?.slug ?? '',
+    doi: paper.doi,
     authors: paper.authors.map((a) => ({ name: a.author.name, email: a.author.email, orcid: a.author.orcid })),
     advisors: paper.advisors.map((a) => ({ name: a.advisor.name, email: a.advisor.email, role: a.role })),
     keywords: paper.keywords.map((k) => k.keyword.term),
@@ -77,12 +78,21 @@ export default async function AdminPaperEditPage({ params }: { params: { id: str
             {paper.activity.map((a) => (
               <li key={a.id} className="flex items-start gap-2">
                 <span className="mt-0.5 inline-block h-1.5 w-1.5 rounded-full bg-ink-300" />
-                <div>
-                  <div className="text-ink-800">{a.action}</div>
-                  <div className="text-xs text-ink-500">
-                    {a.user?.name || a.user?.email || 'system'} · {formatDate(a.createdAt)}
+                  <div>
+                    <div className="text-ink-800">{a.action}</div>
+                    {typeof a.detail === 'object' &&
+                      a.detail &&
+                      'note' in a.detail &&
+                      typeof a.detail.note === 'string' &&
+                      a.detail.note.trim() && (
+                        <div className="mt-1 rounded-md bg-ink-50 px-2 py-1 text-xs text-ink-700">
+                          {a.detail.note}
+                        </div>
+                      )}
+                    <div className="text-xs text-ink-500">
+                      {a.user?.name || a.user?.email || 'system'} · {formatDate(a.createdAt)}
+                    </div>
                   </div>
-                </div>
               </li>
             ))}
           </ul>

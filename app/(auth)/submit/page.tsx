@@ -24,7 +24,9 @@ export default async function SubmitPage() {
         <p className="text-xs uppercase tracking-widest text-ink-500">Submit</p>
         <h1 className="mt-2 font-serif text-4xl text-ink-900">New submission</h1>
         <p className="mt-2 max-w-prose text-ink-600">
-          Fill in metadata and upload a PDF. Submissions enter review before publication.
+          Fill in the public metadata for the work and upload the PDF. Submissions enter editorial
+          review before publication. Unpublished work is not part of the public corpus, and embargoed
+          files remain restricted until release.
         </p>
         <div className="mt-10">
           <PaperForm

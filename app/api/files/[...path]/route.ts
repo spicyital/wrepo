@@ -9,6 +9,11 @@ import mime from './mime'
 
 export const dynamic = 'force-dynamic'
 
+const internalHeaders = {
+  'Cache-Control': 'no-store',
+  'X-Robots-Tag': 'noindex, noarchive',
+}
+
 /**
  * Local-file serving endpoint. Authorizes access before serving:
  *   - PDFs are only public if the owning paper is published, not embargoed,
@@ -22,22 +27,26 @@ export const dynamic = 'force-dynamic'
 export async function GET(_req: NextRequest, { params }: { params: { path: string[] } }) {
   const rel = (params.path ?? []).map(decodeURIComponent).join('/')
   if (!rel || rel.includes('..') || rel.includes('\0')) {
-    return NextResponse.json({ error: 'bad path' }, { status: 400 })
+    return NextResponse.json({ error: 'not found' }, { status: 404, headers: internalHeaders })
   }
 
   const root = path.resolve(process.cwd(), process.env.STORAGE_LOCAL_PATH ?? './storage')
   const full = path.resolve(root, rel)
   if (!full.startsWith(root + path.sep) && full !== root) {
-    return NextResponse.json({ error: 'bad path' }, { status: 400 })
+    return NextResponse.json({ error: 'not found' }, { status: 404, headers: internalHeaders })
   }
 
   // Authorization
   const authz = await authorizeRead(rel)
-  if (!authz.ok) return NextResponse.json({ error: authz.error }, { status: authz.status })
+  if (!authz.ok) {
+    return NextResponse.json({ error: authz.error }, { status: authz.status, headers: internalHeaders })
+  }
 
   try {
     const stat = await fs.stat(full)
-    if (!stat.isFile()) return NextResponse.json({ error: 'not a file' }, { status: 404 })
+    if (!stat.isFile()) {
+      return NextResponse.json({ error: 'not found' }, { status: 404, headers: internalHeaders })
+    }
     const data = await fs.readFile(full)
     const type = mime(full)
     return new NextResponse(data, {
@@ -45,14 +54,16 @@ export async function GET(_req: NextRequest, { params }: { params: { path: strin
       headers: {
         'Content-Type': type,
         'Content-Length': String(stat.size),
-        'Cache-Control': authz.private ? 'private, max-age=0, must-revalidate' : 'public, max-age=3600',
+        'Cache-Control': authz.private ? 'private, no-store' : 'public, max-age=3600',
         'Content-Disposition': 'inline',
         'X-Content-Type-Options': 'nosniff',
+        'X-Robots-Tag': 'noindex, noarchive',
+        ...(authz.private ? { Vary: 'Cookie' } : {}),
       },
     })
   } catch (err) {
     logger.warn('file read failed', { rel, err: (err as Error).message })
-    return NextResponse.json({ error: 'not found' }, { status: 404 })
+    return NextResponse.json({ error: 'not found' }, { status: 404, headers: internalHeaders })
   }
 }
 
@@ -66,14 +77,8 @@ async function authorizeRead(key: string): Promise<Authz> {
     select: { status: true, embargoUntil: true, deletedAt: true, pdfPath: true },
   })
 
-  // Unknown key: restrict to editors. Never serve arbitrary storage content
-  // to the public.
   if (!paper) {
-    const session = await getServerSession(authOptions)
-    if (!session?.user || !canEdit(session.user.role)) {
-      return { ok: false, error: 'not found', status: 404 }
-    }
-    return { ok: true, private: true }
+    return { ok: false, error: 'not found', status: 404 }
   }
 
   const isPublic =
@@ -83,9 +88,9 @@ async function authorizeRead(key: string): Promise<Authz> {
 
   if (isPublic) return { ok: true, private: false }
 
-  // Editors and super_admins can always view their own drafts / embargoed files.
+  // Editors and super_admins can access paper-bound private files for review.
   const session = await getServerSession(authOptions)
   if (session?.user && canEdit(session.user.role)) return { ok: true, private: true }
 
-  return { ok: false, error: 'not available', status: 403 }
+  return { ok: false, error: 'not found', status: 404 }
 }

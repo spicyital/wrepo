@@ -17,6 +17,7 @@ export default async function HomePage() {
       },
     }),
     db.department.findMany({
+      where: { papers: { some: { status: 'published', deletedAt: null } } },
       orderBy: { name: 'asc' },
       include: { _count: { select: { papers: { where: { status: 'published', deletedAt: null } } } } },
     }),
@@ -27,20 +28,35 @@ export default async function HomePage() {
     <>
       <section className="border-b border-ink-100 bg-ink-50/40">
         <div className="mx-auto max-w-5xl px-6 py-20 md:py-28">
-          <p className="text-xs uppercase tracking-widest text-ink-500">WRepo · Academic Archive</p>
+          <p className="text-xs uppercase tracking-widest text-ink-500">WRepo · Academic Repository</p>
           <h1 className="mt-4 max-w-3xl font-serif text-4xl leading-tight text-ink-900 md:text-6xl">
-            A quiet home for student research.
+            Undergraduate research, published with the care it deserves.
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-ink-600">
-            Undergraduate theses, working papers, and departmental scholarship — collected,
-            reviewed, and made permanently discoverable.
+            WRepo is a public repository for undergraduate theses, student research papers, working papers,
+            and departmental scholarship. Published records are citable, structured, and easy to discover.
           </p>
           <div className="mt-8 max-w-2xl">
             <SearchBar size="lg" />
           </div>
-          <p className="mt-4 text-sm text-ink-500">
+          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-ink-500">
             {totalCount.toLocaleString()} published {totalCount === 1 ? 'paper' : 'papers'} and counting.
+            Unpublished submissions and embargoed files remain outside the public corpus.
           </p>
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            <FeatureCard
+              title="Publicly discoverable"
+              body="Canonical paper pages, structured metadata, and machine-readable endpoints support search engines, libraries, and responsible LLM access."
+            />
+            <FeatureCard
+              title="Citation-ready"
+              body="Each public paper page includes a stable URL, citation formats, and clear publication metadata."
+            />
+            <FeatureCard
+              title="Lightweight stewardship"
+              body="The repository is designed to be maintainable by one developer without sacrificing editorial control."
+            />
+          </div>
         </div>
       </section>
 
@@ -70,7 +86,7 @@ export default async function HomePage() {
 
       <section className="mx-auto max-w-6xl px-6 pb-24">
         <div className="flex items-baseline justify-between">
-          <h2 className="font-serif text-2xl text-ink-900">Recent submissions</h2>
+          <h2 className="font-serif text-2xl text-ink-900">Recently published</h2>
           <Link href="/browse" className="text-sm text-accent-600 no-underline hover:text-accent-700">
             See more →
           </Link>
@@ -98,5 +114,14 @@ export default async function HomePage() {
         </div>
       </section>
     </>
+  )
+}
+
+function FeatureCard({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="rounded-xl border border-ink-100 bg-white p-5">
+      <h2 className="font-serif text-lg text-ink-900">{title}</h2>
+      <p className="mt-2 text-sm leading-relaxed text-ink-600">{body}</p>
+    </div>
   )
 }

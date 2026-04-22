@@ -29,6 +29,21 @@ import {
 
 export type ActionResult = { ok: boolean; error?: string; redirectTo?: string; id?: string }
 
+async function removeStoredKeys(keys: Array<string | null | undefined>) {
+  const uniqueKeys = [...new Set(keys.filter((key): key is string => typeof key === 'string' && key.length > 0))]
+  if (uniqueKeys.length === 0) return
+
+  const results = await Promise.allSettled(uniqueKeys.map((key) => storage().remove(key)))
+  results.forEach((result, index) => {
+    if (result.status === 'rejected') {
+      logger.warn('storage cleanup failed', {
+        key: uniqueKeys[index],
+        err: result.reason instanceof Error ? result.reason.message : String(result.reason),
+      })
+    }
+  })
+}
+
 function parseJsonArray(raw: FormDataEntryValue | null): unknown[] {
   if (!raw || typeof raw !== 'string') return []
   try {
@@ -52,6 +67,7 @@ function formToInput(fd: FormData) {
     degreeLevel: (String(fd.get('degreeLevel') || 'undergraduate')) as 'undergraduate',
     documentType: (String(fd.get('documentType') || 'thesis')) as 'thesis',
     departmentSlug: String(fd.get('departmentSlug') ?? ''),
+    doi: normalizeDoi(fd.get('doi')),
     authors: parseJsonArray(fd.get('authors')) as { name: string; email?: string | null; orcid?: string | null }[],
     advisors: parseJsonArray(fd.get('advisors')) as { name: string; email?: string | null; role?: string | null }[],
     keywords: parseJsonArray(fd.get('keywords')) as string[],
@@ -65,6 +81,13 @@ function toIsoOrNull(v: FormDataEntryValue | null): string | null {
   const d = new Date(v)
   if (Number.isNaN(d.valueOf())) return null
   return d.toISOString()
+}
+
+function normalizeDoi(v: FormDataEntryValue | null): string | null {
+  if (!v || typeof v !== 'string') return null
+  const trimmed = v.trim()
+  if (!trimmed) return null
+  return trimmed.replace(/^https?:\/\/(?:dx\.)?doi\.org\//i, '')
 }
 
 async function savePdfIfPresent(fd: FormData, existing?: string | null) {
@@ -82,13 +105,15 @@ async function savePdfIfPresent(fd: FormData, existing?: string | null) {
 
 async function saveCoverIfPresent(fd: FormData, existing?: string | null) {
   const cover = fd.get('cover')
-  if (!(cover instanceof File) || cover.size === 0) return existing ?? null
+  if (!(cover instanceof File) || cover.size === 0) {
+    return { coverPath: existing ?? null, uploaded: false }
+  }
   if (cover.size > IMAGE_MAX_BYTES) throw new UploadError('Cover exceeds 4 MB.')
   const bytes = Buffer.from(await cover.arrayBuffer())
   assertImage(bytes, cover.type)
   const key = generateCoverKey(cover.type)
   const stored = await storage().put(key, bytes, cover.type)
-  return stored.key
+  return { coverPath: stored.key, uploaded: true }
 }
 
 export async function submitPaper(fd: FormData): Promise<ActionResult> {
@@ -97,15 +122,20 @@ export async function submitPaper(fd: FormData): Promise<ActionResult> {
     return { ok: false, error: 'Not authorized.' }
   }
 
+  let newPdfPath: string | null = null
+  let newCoverPath: string | null = null
+
   try {
     const input = formToInput(fd)
     const department = await db.department.findUnique({ where: { slug: input.departmentSlug } })
     if (!department) return { ok: false, error: 'Unknown department.' }
 
     const slug = await ensureUniquePaperSlug(input.title)
-    const { pdfPath, pdfSize } = await savePdfIfPresent(fd)
+    const { pdfPath, pdfSize, uploaded } = await savePdfIfPresent(fd)
     if (!pdfPath) return { ok: false, error: 'PDF file is required.' }
-    const coverPath = await saveCoverIfPresent(fd)
+    const { coverPath, uploaded: coverUploaded } = await saveCoverIfPresent(fd)
+    newPdfPath = uploaded ? pdfPath : null
+    newCoverPath = coverUploaded ? coverPath : null
 
     const authorLinks = await connectAuthors(input.authors)
     const advisorLinks = await connectAdvisors(input.advisors)
@@ -113,48 +143,49 @@ export async function submitPaper(fd: FormData): Promise<ActionResult> {
 
     const initialStatus = canEdit(session.user.role) ? 'approved' : 'submitted'
 
-    const paper = await db.paper.create({
-      data: {
-        slug,
-        title: input.title,
-        subtitle: input.subtitle,
-        abstract: input.abstract,
-        year: input.year,
-        publicationDate: input.publicationDate ? new Date(input.publicationDate) : null,
-        language: input.language,
-        degreeLevel: input.degreeLevel,
-        documentType: input.documentType,
-        license: input.license,
-        embargoUntil: input.embargoUntil ? new Date(input.embargoUntil) : null,
-        departmentId: department.id,
-        submittedById: session.user.id,
-        pdfPath,
-        pdfSize,
-        coverPath,
-        status: initialStatus,
-        authors: { create: authorLinks },
-        advisors: { create: advisorLinks },
-        keywords: { create: keywordLinks },
-        activity: {
-          create: [
-            { userId: session.user.id, action: 'created' },
-            { userId: session.user.id, action: initialStatus },
-          ],
-        },
-      },
-    })
-
-    if (pdfPath) {
-      await db.file.create({
+    const paper = await db.$transaction(async (tx) => {
+      const created = await tx.paper.create({
         data: {
-          paperId: paper.id,
+          slug,
+          title: input.title,
+          subtitle: input.subtitle,
+          abstract: input.abstract,
+          year: input.year,
+          publicationDate: input.publicationDate ? new Date(input.publicationDate) : null,
+          language: input.language,
+          degreeLevel: input.degreeLevel,
+          documentType: input.documentType,
+          doi: input.doi,
+          license: input.license,
+          embargoUntil: input.embargoUntil ? new Date(input.embargoUntil) : null,
+          departmentId: department.id,
+          submittedById: session.user.id,
+          pdfPath,
+          pdfSize,
+          coverPath,
+          status: initialStatus,
+          authors: { create: authorLinks },
+          advisors: { create: advisorLinks },
+          keywords: { create: keywordLinks },
+          activity: {
+            create: [
+              { userId: session.user.id, action: 'created' },
+              { userId: session.user.id, action: initialStatus },
+            ],
+          },
+        },
+      })
+      await tx.file.create({
+        data: {
+          paperId: created.id,
           kind: 'pdf',
           path: pdfPath,
           mimeType: 'application/pdf',
           size: pdfSize ?? 0,
         },
       })
-    }
+      return created
+    })
 
     revalidatePath('/')
     revalidatePath('/browse')
@@ -166,6 +197,7 @@ export async function submitPaper(fd: FormData): Promise<ActionResult> {
       redirectTo: canEdit(session.user.role) ? `/admin/papers/${paper.id}` : '/submit/thanks',
     }
   } catch (err) {
+    await removeStoredKeys([newPdfPath, newCoverPath])
     if (err instanceof UploadError) return { ok: false, error: err.message }
     if (err instanceof ZodError) return { ok: false, error: formatZodError(err) }
     logger.error('submitPaper failed', { err: (err as Error).message })
@@ -186,6 +218,9 @@ export async function updatePaper(id: string, fd: FormData): Promise<ActionResul
     return { ok: false, error: 'Not authorized.' }
   }
 
+  let newPdfPath: string | null = null
+  let newCoverPath: string | null = null
+
   try {
     const input = formToInput(fd)
     const existing = await db.paper.findUnique({ where: { id } })
@@ -195,7 +230,9 @@ export async function updatePaper(id: string, fd: FormData): Promise<ActionResul
     if (!department) return { ok: false, error: 'Unknown department.' }
 
     const { pdfPath, pdfSize, uploaded } = await savePdfIfPresent(fd, existing.pdfPath)
-    const coverPath = await saveCoverIfPresent(fd, existing.coverPath)
+    const { coverPath, uploaded: coverUploaded } = await saveCoverIfPresent(fd, existing.coverPath)
+    newPdfPath = uploaded ? pdfPath : null
+    newCoverPath = coverUploaded ? coverPath : null
 
     const newSlug =
       existing.title !== input.title ? await ensureUniquePaperSlug(input.title, id) : existing.slug
@@ -220,6 +257,7 @@ export async function updatePaper(id: string, fd: FormData): Promise<ActionResul
           language: input.language,
           degreeLevel: input.degreeLevel,
           documentType: input.documentType,
+          doi: input.doi,
           license: input.license,
           embargoUntil: input.embargoUntil ? new Date(input.embargoUntil) : null,
           departmentId: department.id,
@@ -250,6 +288,10 @@ export async function updatePaper(id: string, fd: FormData): Promise<ActionResul
     }
 
     await db.$transaction(tx)
+    await removeStoredKeys([
+      uploaded && existing.pdfPath && existing.pdfPath !== pdfPath ? existing.pdfPath : null,
+      coverUploaded && existing.coverPath && existing.coverPath !== coverPath ? existing.coverPath : null,
+    ])
 
     revalidatePath('/admin/papers')
     revalidatePath(`/papers/${newSlug}`)
@@ -257,6 +299,7 @@ export async function updatePaper(id: string, fd: FormData): Promise<ActionResul
     logger.info('paper updated', { id, by: session.user.id })
     return { ok: true, id, redirectTo: `/admin/papers/${id}` }
   } catch (err) {
+    await removeStoredKeys([newPdfPath, newCoverPath])
     if (err instanceof UploadError) return { ok: false, error: err.message }
     if (err instanceof ZodError) return { ok: false, error: formatZodError(err) }
     logger.error('updatePaper failed', { err: (err as Error).message, id })
@@ -264,7 +307,7 @@ export async function updatePaper(id: string, fd: FormData): Promise<ActionResul
   }
 }
 
-export async function setPaperStatus(id: string, status: string): Promise<ActionResult> {
+export async function setPaperStatus(id: string, status: string, note?: string): Promise<ActionResult> {
   const session = await getServerSession(authOptions)
   if (!session?.user || !canPublish(session.user.role)) {
     return { ok: false, error: 'Not authorized.' }
@@ -288,11 +331,17 @@ export async function setPaperStatus(id: string, status: string): Promise<Action
   }
 
   const data = buildStatusTransitionData(existing.status, existing.publishedAt, status)
+  const trimmedNote = note?.trim() || null
 
   await db.$transaction([
     db.paper.update({ where: { id }, data }),
     db.activityLog.create({
-      data: { paperId: id, userId: session.user.id, action: `status:${status}` },
+      data: {
+        paperId: id,
+        userId: session.user.id,
+        action: `status:${status}`,
+        detail: trimmedNote ? { note: trimmedNote } : undefined,
+      },
     }),
   ])
 

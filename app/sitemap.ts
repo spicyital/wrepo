@@ -10,7 +10,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       where: { status: 'published', deletedAt: null },
       select: { slug: true, updatedAt: true },
     }),
-    db.department.findMany({ select: { slug: true, createdAt: true } }),
+    db.department.findMany({
+      where: { papers: { some: { status: 'published', deletedAt: null } } },
+      select: { slug: true, createdAt: true },
+    }),
   ])
 
   const now = new Date()
@@ -19,6 +22,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: absoluteUrl('/browse'), lastModified: now, changeFrequency: 'daily', priority: 0.8 },
     { url: absoluteUrl('/search'), lastModified: now, changeFrequency: 'weekly', priority: 0.5 },
     { url: absoluteUrl('/about'), lastModified: now, changeFrequency: 'monthly', priority: 0.3 },
+    { url: absoluteUrl('/llms.txt'), lastModified: now, changeFrequency: 'weekly', priority: 0.3 },
+    { url: absoluteUrl('/llms-full.txt'), lastModified: now, changeFrequency: 'weekly', priority: 0.3 },
     ...departments.map((d) => ({
       url: absoluteUrl(`/browse/department/${d.slug}`),
       lastModified: d.createdAt,

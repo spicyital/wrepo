@@ -67,4 +67,4 @@ CMD ["/entrypoint.sh"]
 
 # Fail fast if the app doesn't answer; health-checked by the orchestrator.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD node -e "fetch('http://127.0.0.1:'+process.env.PORT+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+  CMD node -e "const token=process.env.HEALTHCHECK_TOKEN;if(!token)process.exit(1);fetch('http://127.0.0.1:'+process.env.PORT+'/api/health',{headers:{'x-wrepo-health-token':token}}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"

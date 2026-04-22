@@ -4,12 +4,14 @@ import { db } from '@/lib/db'
 import { search } from '@/lib/search'
 import { logger } from '@/lib/logger'
 import { documentTypes } from '@/lib/validation/paper'
+import { absoluteUrl, doiUrl } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
 /**
- * Read-only JSON endpoint for integrations and future OAI-PMH-style exports.
- * Returns only published, non-deleted papers.
+ * Limited public metadata endpoint for published paper records.
+ * It is intentionally read-only and excludes drafts, rejected papers, archived
+ * records, unpublished files, and internal admin data.
  */
 export async function GET(req: NextRequest) {
   try {
@@ -36,7 +38,23 @@ export async function GET(req: NextRequest) {
         offset,
         filters: { departmentSlug, year, documentType: validDocumentType },
       })
-      return NextResponse.json({ total, limit, offset, hits })
+      const hitIds = hits.map((hit) => hit.id)
+      const papers = hitIds.length
+        ? await db.paper.findMany({
+            where: { id: { in: hitIds }, status: 'published', deletedAt: null },
+            include: { authors: { include: { author: true } }, department: true },
+          })
+        : []
+      const byId = new Map(papers.map((paper) => [paper.id, paper]))
+      return NextResponse.json({
+        total,
+        limit,
+        offset,
+        hits: hits
+          .map((hit) => byId.get(hit.id))
+          .filter((paper): paper is (typeof papers)[number] => !!paper)
+          .map((paper) => toPublicListHit(paper)),
+      })
     }
 
     const where: Prisma.PaperWhereInput = {
@@ -62,20 +80,37 @@ export async function GET(req: NextRequest) {
       total,
       limit,
       offset,
-      hits: papers.map((p) => ({
-        id: p.id,
-        slug: p.slug,
-        title: p.title,
-        year: p.year,
-        abstract: p.abstract,
-        department: p.department?.name ?? null,
-        authors: p.authors.map((a) => a.author.name),
-        publishedAt: p.publishedAt,
-      })),
+      hits: papers.map((paper) => toPublicListHit(paper)),
     })
   } catch (err) {
     logger.error('GET /api/papers failed', { err: (err as Error).message })
     return NextResponse.json({ error: 'internal error' }, { status: 500 })
+  }
+}
+
+function toPublicListHit(
+  paper: Prisma.PaperGetPayload<{ include: { authors: { include: { author: true } }; department: true } }>,
+) {
+  const embargoed = !!paper.embargoUntil && paper.embargoUntil > new Date()
+  return {
+    slug: paper.slug,
+    title: paper.title,
+    subtitle: paper.subtitle,
+    year: paper.year,
+    abstract: paper.abstract,
+    url: absoluteUrl(`/papers/${paper.slug}`),
+    department: paper.department?.name ?? null,
+    departmentSlug: paper.department?.slug ?? null,
+    authors: paper.authors.map((author) => author.author.name),
+    publicationDate: paper.publicationDate,
+    publishedAt: paper.publishedAt,
+    language: paper.language,
+    documentType: paper.documentType,
+    license: paper.license,
+    doi: paper.doi,
+    doiUrl: doiUrl(paper.doi),
+    embargoed,
+    pdfUrl: embargoed || !paper.pdfPath ? null : `/api/files/${encodeURI(paper.pdfPath)}`,
   }
 }
 

@@ -37,6 +37,12 @@ export const paperInputSchema = z.object({
   degreeLevel: z.enum(degreeLevels).default('undergraduate'),
   documentType: z.enum(documentTypes).default('thesis'),
   departmentSlug: z.string().min(1, 'Select a department.'),
+  doi: z
+    .string()
+    .max(200, 'DOI is too long.')
+    .refine((value) => !/\s/.test(value), 'DOI cannot contain spaces.')
+    .optional()
+    .nullable(),
   authors: z
     .array(
       z.object({
