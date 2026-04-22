@@ -25,15 +25,35 @@ async function main() {
       role: 'super_admin',
     },
   })
-  console.log(`✔ admin: ${admin.email}`)
+  console.log(`[ok] admin: ${admin.email}`)
 
   const departments = await Promise.all(
     [
-      { name: 'School of International Liberal Studies', shortCode: 'SILS', about: 'Interdisciplinary studies across languages, cultures, and global systems.' },
-      { name: 'Political Science', shortCode: 'PS', about: 'Governance, political theory, international relations.' },
-      { name: 'Computer Science', shortCode: 'CS', about: 'Systems, theory, and applied computing.' },
-      { name: 'Economics', shortCode: 'ECON', about: 'Micro, macro, econometrics, and policy.' },
-      { name: 'Literature', shortCode: 'LIT', about: 'Comparative literature and literary theory.' },
+      {
+        name: 'School of International Liberal Studies',
+        shortCode: 'SILS',
+        about: 'Interdisciplinary studies across languages, cultures, and global systems.',
+      },
+      {
+        name: 'Political Science',
+        shortCode: 'PS',
+        about: 'Governance, political theory, international relations.',
+      },
+      {
+        name: 'Computer Science',
+        shortCode: 'CS',
+        about: 'Systems, theory, and applied computing.',
+      },
+      {
+        name: 'Economics',
+        shortCode: 'ECON',
+        about: 'Micro, macro, econometrics, and policy.',
+      },
+      {
+        name: 'Literature',
+        shortCode: 'LIT',
+        about: 'Comparative literature and literary theory.',
+      },
     ].map((d) =>
       db.department.upsert({
         where: { slug: slugify(d.name) },
@@ -63,7 +83,7 @@ async function main() {
       title: 'Between Borders, Between Languages: Code-switching in Tokyo Youth Narratives',
       subtitle: 'A sociolinguistic study of bilingual identity',
       abstract:
-        'This thesis examines how bilingual young adults in Tokyo navigate code-switching between Japanese and English as a tool of identity construction. Drawing on 24 semi-structured interviews and a narrative-analysis framework, the study finds that code-switching operates less as a linguistic accident than as a deliberate practice of alignment — with interlocutor, with topic, and with situational stance.',
+        'This thesis examines how bilingual young adults in Tokyo navigate code-switching between Japanese and English as a tool of identity construction. Drawing on 24 semi-structured interviews and a narrative-analysis framework, the study finds that code-switching operates less as a linguistic accident than as a deliberate practice of alignment with interlocutor, topic, and situational stance.',
       year: 2025,
       department: slugify('School of International Liberal Studies'),
       degreeLevel: 'undergraduate',
@@ -76,15 +96,12 @@ async function main() {
     {
       title: 'Quiet Deliberation: Small-Group Decision Making in Municipal Councils',
       abstract:
-        'Using transcripts from 312 municipal council meetings, we model how quiet-majority dynamics shape policy outcomes. Contrary to the assumption that vocal majorities drive agenda-setting, the data suggest that silent consensus — often formed during procedural lulls — predicts final votes with surprising accuracy.',
+        'Using transcripts from 312 municipal council meetings, we model how quiet-majority dynamics shape policy outcomes. Contrary to the assumption that vocal majorities drive agenda-setting, the data suggest that silent consensus, often formed during procedural lulls, predicts final votes with surprising accuracy.',
       year: 2024,
       department: slugify('Political Science'),
       degreeLevel: 'honours',
       documentType: 'research_paper',
-      authors: [
-        { name: 'Jonas Weber' },
-        { name: 'Elena Park' },
-      ],
+      authors: [{ name: 'Jonas Weber' }, { name: 'Elena Park' }],
       advisors: [{ name: 'Dr. Aisha Okafor', role: 'primary' }],
       keywords: ['deliberation', 'governance', 'councils', 'decision-making'],
       license: 'CC-BY-4.0',
@@ -92,7 +109,7 @@ async function main() {
     {
       title: 'Fast-Enough: Lightweight Full-Text Search for Small Archives',
       abstract:
-        'We benchmark PostgreSQL full-text search against Meilisearch and OpenSearch for archives under 50k documents. For operators running small self-hosted repositories, vanilla PostgreSQL FTS is within 10–30% of specialized engines on query latency while halving operational complexity.',
+        'We benchmark PostgreSQL full-text search against Meilisearch and OpenSearch for archives under 50k documents. For operators running small self-hosted repositories, vanilla PostgreSQL FTS is within 10-30% of specialized engines on query latency while halving operational complexity.',
       year: 2025,
       department: slugify('Computer Science'),
       degreeLevel: 'undergraduate',
@@ -130,7 +147,7 @@ async function main() {
     {
       title: 'Designing Consent: User Interfaces for Research Participation',
       abstract:
-        'A design study evaluating informed-consent flows across ten online research platforms. We propose a three-layer pattern — gist, detail, contract — and show through usability testing that the pattern improves both comprehension and completion rates.',
+        'A design study evaluating informed-consent flows across ten online research platforms. We propose a three-layer pattern - gist, detail, contract - and show through usability testing that the pattern improves both comprehension and completion rates.',
       year: 2025,
       department: slugify('Computer Science'),
       degreeLevel: 'undergraduate',
@@ -168,8 +185,28 @@ async function main() {
 
   for (const p of papers) {
     const existing = await db.paper.findFirst({ where: { title: p.title } })
+
+    const paperData = {
+      title: p.title,
+      subtitle: p.subtitle,
+      abstract: p.abstract,
+      year: p.year,
+      publishedAt: new Date(`${p.year}-06-01`),
+      language: 'en',
+      degreeLevel: p.degreeLevel,
+      documentType: p.documentType,
+      license: p.license,
+      status: 'published' as const,
+      departmentId: bySlug[p.department].id,
+      submittedById: admin.id,
+    }
+
     if (existing) {
-      console.log(`• skip: ${p.title}`)
+      await db.paper.update({
+        where: { id: existing.id },
+        data: paperData,
+      })
+      console.log(`[update] ${p.title}`)
       continue
     }
 
@@ -207,34 +244,27 @@ async function main() {
     await db.paper.create({
       data: {
         slug: paperSlug,
-        title: p.title,
-        subtitle: p.subtitle,
-        abstract: p.abstract,
-        year: p.year,
-        publishedAt: new Date(`${p.year}-06-01`),
-        language: 'en',
-        degreeLevel: p.degreeLevel,
-        documentType: p.documentType,
-        license: p.license,
-        status: 'published',
-        departmentId: bySlug[p.department].id,
-        submittedById: admin.id,
+        ...paperData,
         authors: { create: authorRecords },
         advisors: { create: advisorRecords },
         keywords: { create: keywordRecords },
       },
     })
-    console.log(`✔ ${p.title}`)
+    console.log(`[ok] ${p.title}`)
   }
 }
 
 async function uniqSlug(kind: 'author' | 'advisor' | 'keyword' | 'paper', base: string): Promise<string> {
   const check = async (slug: string) => {
     switch (kind) {
-      case 'author': return !!(await db.author.findUnique({ where: { slug } }))
-      case 'advisor': return !!(await db.advisor.findUnique({ where: { slug } }))
-      case 'keyword': return !!(await db.keyword.findUnique({ where: { slug } }))
-      case 'paper': return !!(await db.paper.findUnique({ where: { slug } }))
+      case 'author':
+        return !!(await db.author.findUnique({ where: { slug } }))
+      case 'advisor':
+        return !!(await db.advisor.findUnique({ where: { slug } }))
+      case 'keyword':
+        return !!(await db.keyword.findUnique({ where: { slug } }))
+      case 'paper':
+        return !!(await db.paper.findUnique({ where: { slug } }))
     }
   }
   let candidate = base || kind

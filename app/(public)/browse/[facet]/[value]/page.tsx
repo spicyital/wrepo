@@ -15,7 +15,7 @@ export async function generateMetadata({
   params: { facet: string; value: string }
 }): Promise<Metadata> {
   const label = prettyLabel(params.facet, decodeURIComponent(params.value))
-  return { title: label ? `${label} — Browse` : 'Browse' }
+  return { title: label ? `${label} - Browse` : 'Browse' }
 }
 
 export default async function BrowseFacetPage({
@@ -36,7 +36,7 @@ export default async function BrowseFacetPage({
   return (
     <div className="mx-auto max-w-4xl px-6 py-16">
       <Link href="/browse" className="text-xs uppercase tracking-widest text-ink-500 no-underline hover:text-ink-800">
-        ← Browse
+        Back to browse
       </Link>
       <h1 className="mt-2 font-serif text-4xl text-ink-900">{heading}</h1>
       <p className="mt-2 text-sm text-ink-500">
@@ -67,13 +67,20 @@ export default async function BrowseFacetPage({
 
 function prettyLabel(facet: string, value: string): string {
   switch (facet) {
-    case 'department': return `Department · ${value}`
-    case 'year': return `Year · ${value}`
-    case 'author': return `Author · ${value}`
-    case 'advisor': return `Advisor · ${value}`
-    case 'type': return `Type · ${value.replaceAll('_', ' ')}`
-    case 'keyword': return `Keyword · ${value}`
-    default: return value
+    case 'department':
+      return `Department / ${value}`
+    case 'year':
+      return `Year / ${value}`
+    case 'author':
+      return `Author / ${value}`
+    case 'advisor':
+      return `Advisor / ${value}`
+    case 'type':
+      return `Type / ${value.replaceAll('_', ' ')}`
+    case 'keyword':
+      return `Keyword / ${value}`
+    default:
+      return value
   }
 }
 

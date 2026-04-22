@@ -32,7 +32,7 @@ export function SearchBar({
         name="q"
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Search titles, abstracts, authors, keywords…"
+        placeholder="Search titles, abstracts, authors, keywords..."
         aria-label="Search papers"
         className={cn(
           'w-full rounded-full border border-ink-200 bg-white px-5 text-ink-900 shadow-[0_1px_2px_rgba(0,0,0,0.02)]',

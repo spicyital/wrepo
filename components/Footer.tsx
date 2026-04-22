@@ -8,7 +8,7 @@ export function Footer() {
         <div>
           <div className="font-serif text-lg text-ink-900">WRepo</div>
           <p className="mt-2 max-w-xs text-ink-500">
-            A repository for undergraduate theses, student research, and departmental scholarship.
+            A repository for undergraduate theses, student research, and working papers.
           </p>
         </div>
         <div>
@@ -41,7 +41,7 @@ export function Footer() {
       <div className="border-t border-ink-100">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 text-xs text-ink-500">
           <span>© {year} WRepo</span>
-          <span>Open scholarship, responsibly archived.</span>
+          <span>Public research, responsibly archived.</span>
         </div>
       </div>
     </footer>

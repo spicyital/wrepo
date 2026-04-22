@@ -21,11 +21,11 @@ export function PaperCard(p: PaperCardProps) {
             {p.department.name}
           </Link>
         )}
-        <span className="text-ink-300">·</span>
+        <span className="text-ink-300">/</span>
         <span>{p.year}</span>
         {p.documentType && (
           <>
-            <span className="text-ink-300">·</span>
+            <span className="text-ink-300">/</span>
             <Badge tone="neutral" className="capitalize">
               {p.documentType.replaceAll('_', ' ')}
             </Badge>

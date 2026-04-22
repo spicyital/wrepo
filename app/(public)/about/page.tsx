@@ -10,21 +10,21 @@ export default function AboutPage() {
   return (
     <article className="mx-auto max-w-3xl px-6 py-16 prose-serif">
       <p className="text-xs uppercase tracking-widest text-ink-500">About</p>
-      <h1 className="mt-2 font-serif text-4xl text-ink-900">A credible home for student and departmental scholarship.</h1>
+      <h1 className="mt-2 font-serif text-4xl text-ink-900">A credible home for student research and working papers.</h1>
 
       <div className="prose prose-ink mt-10 max-w-none text-ink-700">
         <p>
           WRepo is a self-hosted academic repository for undergraduate theses, student research papers,
-          working papers, and departmental scholarship. Its purpose is practical: to give publishable
-          work a stable public home with clear metadata, citation support, and a durable URL.
+          and working papers. Its purpose is practical: to give publishable work a stable public home
+          with clear metadata, citation support, and a durable URL.
         </p>
 
         <h2 className="mt-10 font-serif text-2xl text-ink-900">What is public</h2>
         <p>
-          WRepo is a public archive of published records. Public paper pages include structured metadata,
-          abstracts, citation formats, and machine-readable discovery surfaces such as JSON-LD,
-          <code> llms.txt</code>, <code> llms-full.txt</code>, and a limited read-only metadata API for
-          published papers.
+          Published papers and metadata on WRepo are publicly accessible by design. Public paper pages
+          include structured metadata, abstracts, citation formats, and machine-readable discovery
+          surfaces such as JSON-LD, <code> llms.txt</code>, <code> llms-full.txt</code>, and a limited
+          read-only metadata API for published papers.
         </p>
         <p>
           Unpublished submissions are not part of the public corpus. Embargoed works may appear as

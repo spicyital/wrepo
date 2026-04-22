@@ -20,9 +20,10 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   })
   if (!paper) return { title: 'Not found' }
   const description = truncate(paper.abstract, 200)
-  const coverImage = paper.coverPath && (!paper.embargoUntil || paper.embargoUntil <= new Date())
-    ? [`${absoluteUrl(`/api/files/${encodeURI(paper.coverPath)}`)}`]
-    : undefined
+  const coverImage =
+    paper.coverPath && (!paper.embargoUntil || paper.embargoUntil <= new Date())
+      ? [`${absoluteUrl(`/api/files/${encodeURI(paper.coverPath)}`)}`]
+      : undefined
   return {
     title: paper.title,
     description,
@@ -90,10 +91,12 @@ export default async function PaperPage({ params }: { params: { slug: string } }
             {paper.department.name}
           </Link>
         )}
-        <span className="text-ink-300">·</span>
+        <span className="text-ink-300">/</span>
         <span>{paper.year}</span>
-        <span className="text-ink-300">·</span>
-        <Badge tone="neutral" className="capitalize">{paper.documentType.replaceAll('_', ' ')}</Badge>
+        <span className="text-ink-300">/</span>
+        <Badge tone="neutral" className="capitalize">
+          {paper.documentType.replaceAll('_', ' ')}
+        </Badge>
         {embargoed && <Badge tone="warn">Embargoed until {formatDate(paper.embargoUntil)}</Badge>}
       </div>
 

@@ -42,7 +42,7 @@ services:
       HEALTHCHECK_TOKEN: ${HEALTHCHECK_TOKEN}
       APP_URL: ${APP_URL:-https://wrepo.org}
       APP_NAME: ${APP_NAME:-WRepo}
-      APP_DESCRIPTION: ${APP_DESCRIPTION:-Public repository for undergraduate theses, student research papers, working papers, and departmental scholarship.}
+      APP_DESCRIPTION: ${APP_DESCRIPTION:-Public repository for undergraduate theses, student research papers, and working papers.}
       STORAGE_DRIVER: local
       STORAGE_LOCAL_PATH: /app/storage
       ENABLE_UPLOAD_API: ${ENABLE_UPLOAD_API:-0}

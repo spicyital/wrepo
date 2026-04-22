@@ -45,6 +45,7 @@ export default async function SearchPage({
       orderBy: { year: 'desc' },
     }),
   ])
+  const hasPublishedCorpus = years.length > 0
   const showingFrom = total === 0 ? 0 : offset + 1
   const showingTo = Math.min(total, offset + hits.length)
   const hasFilters = !!q || !!departmentSlug || year !== undefined || !!validDocumentType
@@ -86,66 +87,89 @@ export default async function SearchPage({
       <div className="mt-6 max-w-2xl">
         <SearchBar defaultValue={q} />
       </div>
-
-      <div className="mt-8 space-y-4">
-        <FilterRow label="Scope">
-          <Link
-            href={`/search?${new URLSearchParams({ ...(q ? { q } : {}) }).toString()}`}
-            className={chip(!departmentSlug && !year && !documentType)}
-          >
-            All results
-          </Link>
-          {hasFilters && (
-            <Link href={q ? `/search?${new URLSearchParams({ q }).toString()}` : '/search'} className={chip(false)}>
-              Clear filters
-            </Link>
-          )}
-        </FilterRow>
-        <FilterRow label="Department">
-          {departments.slice(0, 8).map((d) => (
-            <Link
-              key={d.id}
-              href={`/search?${new URLSearchParams({ ...(q ? { q } : {}), department: d.slug }).toString()}`}
-              className={chip(departmentSlug === d.slug)}
-            >
-              {d.name}
-            </Link>
-          ))}
-        </FilterRow>
-        <FilterRow label="Year">
-          {years.slice(0, 6).map((y) => (
-            <Link
-              key={y.year}
-              href={`/search?${new URLSearchParams({ ...(q ? { q } : {}), year: String(y.year) }).toString()}`}
-              className={chip(year === y.year)}
-            >
-              {y.year}
-            </Link>
-          ))}
-        </FilterRow>
-        <FilterRow label="Type">
-          {documentTypes.map((type) => (
-            <Link
-              key={type}
-              href={`/search?${new URLSearchParams({ ...(q ? { q } : {}), type }).toString()}`}
-              className={chip(validDocumentType === type)}
-            >
-              {type.replaceAll('_', ' ')}
-            </Link>
-          ))}
-        </FilterRow>
-      </div>
-
-      <p className="mt-8 text-sm text-ink-500">
-        Showing {showingFrom.toLocaleString()}-{showingTo.toLocaleString()} of {total.toLocaleString()}{' '}
-        {total === 1 ? 'result' : 'results'}
-        {q && <> for <span className="text-ink-800">“{q}”</span></>}
+      <p className="mt-3 text-sm text-ink-500">
+        Prefer structured browsing?{' '}
+        <Link href="/browse" className="text-accent-600 no-underline hover:text-accent-700">
+          Browse by department, year, author, advisor, or type.
+        </Link>
       </p>
+
+      {hasPublishedCorpus ? (
+        <div className="mt-8 space-y-4">
+          <FilterRow label="Scope">
+            <Link
+              href={`/search?${new URLSearchParams({ ...(q ? { q } : {}) }).toString()}`}
+              className={chip(!departmentSlug && !year && !documentType)}
+            >
+              All results
+            </Link>
+            {hasFilters && (
+              <Link href={q ? `/search?${new URLSearchParams({ q }).toString()}` : '/search'} className={chip(false)}>
+                Clear filters
+              </Link>
+            )}
+          </FilterRow>
+          <FilterRow label="Department">
+            {departments.slice(0, 8).map((d) => (
+              <Link
+                key={d.id}
+                href={`/search?${new URLSearchParams({ ...(q ? { q } : {}), department: d.slug }).toString()}`}
+                className={chip(departmentSlug === d.slug)}
+              >
+                {d.name}
+              </Link>
+            ))}
+          </FilterRow>
+          <FilterRow label="Year">
+            {years.slice(0, 6).map((y) => (
+              <Link
+                key={y.year}
+                href={`/search?${new URLSearchParams({ ...(q ? { q } : {}), year: String(y.year) }).toString()}`}
+                className={chip(year === y.year)}
+              >
+                {y.year}
+              </Link>
+            ))}
+          </FilterRow>
+          <FilterRow label="Type">
+            {documentTypes.map((type) => (
+              <Link
+                key={type}
+                href={`/search?${new URLSearchParams({ ...(q ? { q } : {}), type }).toString()}`}
+                className={chip(validDocumentType === type)}
+              >
+                {type.replaceAll('_', ' ')}
+              </Link>
+            ))}
+          </FilterRow>
+        </div>
+      ) : (
+        <div className="mt-8 rounded-xl border border-dashed border-ink-200 bg-ink-50/60 p-6">
+          <p className="font-medium text-ink-900">No published papers are live yet.</p>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-500">
+            Search results and filters will populate automatically once public records are published.
+          </p>
+        </div>
+      )}
+
+      {hasPublishedCorpus ? (
+        <p className="mt-8 text-sm text-ink-500">
+          Showing {showingFrom.toLocaleString()}-{showingTo.toLocaleString()} of {total.toLocaleString()}{' '}
+          {total === 1 ? 'result' : 'results'}
+          {q && <> for <span className="text-ink-800">&quot;{q}&quot;</span></>}
+        </p>
+      ) : (
+        <p className="mt-8 text-sm text-ink-500">No published records are available in the public archive yet.</p>
+      )}
 
       <div className="mt-4">
         {ordered.length === 0 ? (
           <div className="rounded-xl border border-ink-100 bg-white py-16 text-center">
-            <p className="text-sm text-ink-500">No matches. Try fewer words or different filters.</p>
+            <p className="text-sm text-ink-500">
+              {hasPublishedCorpus
+                ? 'No matches. Try fewer words or different filters.'
+                : 'Search results will appear here once published papers are available.'}
+            </p>
           </div>
         ) : (
           ordered.map((p) => (
@@ -167,7 +191,7 @@ export default async function SearchPage({
         <nav className="mt-10 flex items-center justify-between text-sm" aria-label="Pagination">
           {page > 1 ? (
             <Link href={pageHref(page - 1)} className="text-accent-600 hover:text-accent-700">
-              ← Previous
+              Previous page
             </Link>
           ) : (
             <span />
@@ -177,7 +201,7 @@ export default async function SearchPage({
           </span>
           {page < totalPages ? (
             <Link href={pageHref(page + 1)} className="text-accent-600 hover:text-accent-700">
-              Next →
+              Next page
             </Link>
           ) : (
             <span />

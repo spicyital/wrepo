@@ -1,9 +1,6 @@
-<<<<<<< HEAD
-# wrepo
-=======
 # WRepo
 
-A small, self-hosted academic paper repository for undergraduate theses, student research, and departmental scholarship. Designed to run on a single always-on Linux machine (a Chuwi HeroBox is fine), maintainable by one developer, and good enough for a real department archive behind a domain.
+A small, self-hosted academic paper repository for undergraduate theses, student research, and working papers. Designed to run on a single always-on Linux machine (a Chuwi HeroBox is fine), maintainable by one developer, and good enough for a real department archive behind a domain.
 
 - **Stack** — Next.js 14 (App Router) + TypeScript, PostgreSQL + Prisma, Auth.js, Tailwind.
 - **Ops** — Docker Compose + Nginx + Let's Encrypt, no external services required.
@@ -158,8 +155,8 @@ The public metadata API intentionally excludes secrets, environment values, admi
 
 WRepo exposes two plain-text discovery endpoints for LLMs, agents, and external tools:
 
-- `/llms.txt` â€” a compact public summary of the repository, canonical entry points, data endpoints, and corpus rules.
-- `/llms-full.txt` â€” a richer machine-oriented description of route patterns, metadata fields, filters, and access rules.
+- `/llms.txt` - a compact public summary of the repository, canonical entry points, data endpoints, and corpus rules.
+- `/llms-full.txt` - a richer machine-oriented description of route patterns, metadata fields, filters, and access rules.
 
 They help agents discover the public archive without crawling admin or submission routes blindly. Both files explicitly state that only published, public, non-embargoed paper content should be treated as open corpus material, and that file URLs may still enforce access rules.
 
@@ -362,4 +359,3 @@ The codebase is shaped to make these extensions small, not speculative:
 
 Code: MIT (add a `LICENSE` file when publishing).
 Uploaded content: per-paper — see each paper's listed license.
->>>>>>> b7f6a9b (Prepare production deploy for chuwi)

@@ -31,7 +31,7 @@ function formatPatterns(patterns: RoutePattern[]) {
 export const siteName = process.env.APP_NAME ?? 'WRepo'
 export const siteDescription =
   process.env.APP_DESCRIPTION ??
-  'Public repository for undergraduate theses, student research papers, working papers, and departmental scholarship.'
+  'Public repository for undergraduate theses, student research papers, and working papers.'
 export const siteBaseUrl = joinUrl('/').replace(/\/$/, '')
 export const contactEmail = 'contact@wrepo.org'
 export const aboutUrl = joinUrl('/about')
@@ -42,7 +42,7 @@ export const llmsProject = {
   description: siteDescription,
   baseUrl: siteBaseUrl,
   contains:
-    'Undergraduate theses, working papers, research papers, and departmental scholarship with public metadata, citation support, and editorial review.',
+    'Undergraduate theses, working papers, and student research with public metadata, citation support, and editorial review.',
 }
 
 export const llmsPublicEntryPoints: Link[] = [
