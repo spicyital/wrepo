@@ -30,9 +30,9 @@ export function LoginForm() {
     <main className="mx-auto flex min-h-screen max-w-md items-center px-6">
       <div className="w-full">
         <Link href="/" className="text-xs uppercase tracking-widest text-ink-500 no-underline hover:text-ink-800">
-          ← WRepo
+          Back to WRepo
         </Link>
-        <h1 className="mt-4 font-serif text-3xl text-ink-900">Sign in</h1>
+        <h1 className="mt-4 font-serif text-3xl text-ink-900">Repository sign in</h1>
         <p className="mt-1 text-sm text-ink-500">For authors, editors, and repository staff.</p>
 
         {registered && (
@@ -52,14 +52,14 @@ export function LoginForm() {
           </label>
           {error && <div className="rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{error}</div>}
           <Button type="submit" className="w-full" disabled={busy}>
-            {busy ? 'Signing in…' : 'Sign in'}
+            {busy ? 'Signing in...' : 'Sign in to repository'}
           </Button>
         </form>
 
         <p className="mt-4 text-sm text-ink-500">
           Need an account?{' '}
           <Link href="/signup" className="text-accent-600 no-underline hover:text-accent-700">
-            Create one
+            Create a submitter account
           </Link>
           .
         </p>

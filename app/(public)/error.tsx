@@ -19,7 +19,7 @@ export default function PublicError({
       <p className="text-xs uppercase tracking-widest text-ink-500">Error</p>
       <h1 className="mt-2 font-serif text-4xl text-ink-900">Something went wrong.</h1>
       <p className="mt-4 text-ink-600">
-        An unexpected error occurred. Try again in a moment — if this keeps happening, please let us know.
+        An unexpected error occurred. Try again in a moment. If this keeps happening, please let us know.
       </p>
       <div className="mt-8 flex justify-center gap-3">
         <button

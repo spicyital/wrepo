@@ -27,7 +27,7 @@ export default async function SearchPage({
   const page = Math.max(1, Number(searchParams.page ?? '1') || 1)
   const offset = (page - 1) * PAGE_SIZE
 
-  const [{ hits, total }, departments, years] = await Promise.all([
+  const [{ hits, total }, departments, years, types] = await Promise.all([
     search().query({
       q,
       filters: { departmentSlug, year, documentType: validDocumentType },
@@ -43,6 +43,12 @@ export default async function SearchPage({
       where: { status: 'published', deletedAt: null },
       _count: true,
       orderBy: { year: 'desc' },
+    }),
+    db.paper.groupBy({
+      by: ['documentType'],
+      where: { status: 'published', deletedAt: null },
+      _count: true,
+      orderBy: { documentType: 'asc' },
     }),
   ])
   const hasPublishedCorpus = years.length > 0
@@ -79,7 +85,7 @@ export default async function SearchPage({
   return (
     <div className="mx-auto max-w-5xl px-6 py-16">
       <p className="text-xs uppercase tracking-widest text-ink-500">Search</p>
-      <h1 className="mt-2 font-serif text-4xl text-ink-900">Find across the archive.</h1>
+      <h1 className="mt-2 font-serif text-4xl text-ink-900">Search the public archive.</h1>
       <p className="mt-3 max-w-2xl text-ink-600">
         Search published records by title, abstract, author, or keyword. Results are ordered by
         relevance when a query is present, then by publication date.
@@ -132,34 +138,42 @@ export default async function SearchPage({
             ))}
           </FilterRow>
           <FilterRow label="Type">
-            {documentTypes.map((type) => (
+            {types.map((type) => (
               <Link
-                key={type}
-                href={`/search?${new URLSearchParams({ ...(q ? { q } : {}), type }).toString()}`}
-                className={chip(validDocumentType === type)}
+                key={type.documentType}
+                href={`/search?${new URLSearchParams({ ...(q ? { q } : {}), type: type.documentType }).toString()}`}
+                className={chip(validDocumentType === type.documentType)}
               >
-                {type.replaceAll('_', ' ')}
+                {type.documentType.replaceAll('_', ' ')}
               </Link>
             ))}
           </FilterRow>
         </div>
       ) : (
         <div className="mt-8 rounded-xl border border-dashed border-ink-200 bg-ink-50/60 p-6">
-          <p className="font-medium text-ink-900">No published papers are live yet.</p>
+          <p className="font-medium text-ink-900">The search index is ready for the first public records.</p>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-500">
-            Search results and filters will populate automatically once public records are published.
+            Published records become searchable as soon as they are added to the archive.
           </p>
         </div>
       )}
 
       {hasPublishedCorpus ? (
         <p className="mt-8 text-sm text-ink-500">
-          Showing {showingFrom.toLocaleString()}-{showingTo.toLocaleString()} of {total.toLocaleString()}{' '}
-          {total === 1 ? 'result' : 'results'}
-          {q && <> for <span className="text-ink-800">&quot;{q}&quot;</span></>}
+          {total > 0 ? (
+            <>
+              Showing {showingFrom.toLocaleString()}-{showingTo.toLocaleString()} of {total.toLocaleString()}{' '}
+              {total === 1 ? 'result' : 'results'}
+              {q && <> for <span className="text-ink-800">&quot;{q}&quot;</span></>}
+            </>
+          ) : hasFilters ? (
+            'No published records match this search or filter.'
+          ) : (
+            'No published records match the current view.'
+          )}
         </p>
       ) : (
-        <p className="mt-8 text-sm text-ink-500">No published records are available in the public archive yet.</p>
+        <p className="mt-8 text-sm text-ink-500">The public archive is ready for its first published records.</p>
       )}
 
       <div className="mt-4">
@@ -167,8 +181,8 @@ export default async function SearchPage({
           <div className="rounded-xl border border-ink-100 bg-white py-16 text-center">
             <p className="text-sm text-ink-500">
               {hasPublishedCorpus
-                ? 'No matches. Try fewer words or different filters.'
-                : 'Search results will appear here once published papers are available.'}
+                ? 'No published records match this search yet. Try a broader query or clear filters.'
+                : 'Published records appear here as they are added to the archive.'}
             </p>
           </div>
         ) : (

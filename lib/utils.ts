@@ -21,7 +21,7 @@ export function truncate(text: string, max = 240) {
 }
 
 export function absoluteUrl(path: string) {
-  const base = process.env.APP_URL || process.env.NEXTAUTH_URL || 'https://wrepo.org'
+  const base = process.env.APP_URL || process.env.NEXTAUTH_URL || 'https://wrepo.net'
   return new URL(path, base).toString()
 }
 

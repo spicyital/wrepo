@@ -23,6 +23,10 @@ export default async function HomePage() {
     }),
     db.paper.count({ where: { status: 'published', deletedAt: null } }),
   ])
+  const publishedSummary =
+    totalCount === 0
+      ? 'The public archive is ready for its first published records.'
+      : `${totalCount.toLocaleString()} published ${totalCount === 1 ? 'paper is' : 'papers are'} available in the public archive.`
 
   return (
     <>
@@ -30,11 +34,11 @@ export default async function HomePage() {
         <div className="mx-auto max-w-5xl px-6 py-20 md:py-28">
           <p className="text-xs uppercase tracking-widest text-ink-500">WRepo / Academic Repository</p>
           <h1 className="mt-4 max-w-3xl font-serif text-4xl leading-tight text-ink-900 md:text-6xl">
-            Undergraduate research, published with the care it deserves.
+            A public repository for student research and working papers.
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-ink-600">
-            WRepo is a public repository for undergraduate theses, student research papers, and working
-            papers. Published records are citable, structured, and easy to discover.
+            WRepo preserves undergraduate theses, research papers, and working papers as citable
+            public records with stable URLs, structured metadata, and clear access status.
           </p>
           <div className="mt-8 max-w-2xl">
             <SearchBar size="lg" />
@@ -61,8 +65,7 @@ export default async function HomePage() {
           </div>
           <p className="mt-4 max-w-2xl text-sm leading-relaxed text-ink-500">
             Published papers and metadata on WRepo are publicly accessible.{' '}
-            {totalCount.toLocaleString()} published {totalCount === 1 ? 'paper' : 'papers'} and counting.
-            Unpublished submissions and embargoed files remain outside the public corpus.
+            {publishedSummary} Unpublished submissions and embargoed files remain outside the public corpus.
           </p>
           <div className="mt-10 grid gap-4 md:grid-cols-3">
             <FeatureCard
@@ -75,7 +78,7 @@ export default async function HomePage() {
             />
             <FeatureCard
               title="Lightweight stewardship"
-              body="The repository is designed to be maintainable by one developer without sacrificing editorial control."
+              body="Repository policies support editorial review, corrections, embargoes, and responsible public access."
             />
           </div>
         </div>
@@ -91,10 +94,10 @@ export default async function HomePage() {
         <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {departments.length === 0 ? (
             <div className="rounded-xl border border-dashed border-ink-200 bg-ink-50/60 p-6 md:col-span-2 lg:col-span-3">
-              <p className="font-medium text-ink-900">No published departments yet.</p>
+              <p className="font-medium text-ink-900">Department browsing is ready for the first records.</p>
               <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-500">
-                Department listings will appear automatically once published papers are added to the public
-                repository.
+                Department facets are shown when published papers are assigned to them, keeping the archive
+                focused on records that are already public.
               </p>
             </div>
           ) : (
@@ -125,9 +128,9 @@ export default async function HomePage() {
         <div className="mt-4">
           {recent.length === 0 ? (
             <div className="rounded-xl border border-dashed border-ink-200 bg-white py-12 text-center">
-              <p className="text-sm font-medium text-ink-800">No published papers are live yet.</p>
+              <p className="text-sm font-medium text-ink-800">The archive is ready for its first public records.</p>
               <p className="mt-2 text-sm text-ink-500">
-                This section will populate automatically once public records are published.
+                Newly published papers appear here in reverse publication order.
               </p>
             </div>
           ) : (

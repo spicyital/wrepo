@@ -1,6 +1,6 @@
 # Deployment
 
-This guide is the production path for `https://wrepo.org` on a self-hosted Ubuntu machine behind Cloudflare.
+This guide is the production path for `https://wrepo.net` on a self-hosted Ubuntu machine behind Cloudflare.
 
 ## Recommended model
 
@@ -13,7 +13,7 @@ Why this is the better fit for a one-person home-server setup:
 - Fewer moving parts than public Nginx + Certbot on a residential connection
 - Clean rollback path: stop the tunnel, keep app/data intact
 
-Direct-origin Nginx is still supported as a fallback. The example config remains at [`docker/nginx.conf`](../docker/nginx.conf), but it is not the recommended live setup for `wrepo.org`.
+Direct-origin Nginx is still supported as a fallback. The example config remains at [`docker/nginx.conf`](../docker/nginx.conf), but it is not the recommended live setup for `wrepo.net`.
 
 ## Target architecture
 
@@ -28,7 +28,7 @@ Browser
 
 Public exposure:
 
-- `wrepo.org` and `www.wrepo.org` are proxied by Cloudflare
+- `wrepo.net` and `www.wrepo.net` are proxied by Cloudflare
 - No public inbound ports are opened on the home router
 - Docker publishes `127.0.0.1:3000` and `127.0.0.1:5432` for on-host debugging only
 
@@ -72,8 +72,8 @@ chmod 600 .env
 Edit `.env` and set these values before first deploy:
 
 - `NODE_ENV=production`
-- `APP_URL=https://wrepo.org`
-- `NEXTAUTH_URL=https://wrepo.org`
+- `APP_URL=https://wrepo.net`
+- `NEXTAUTH_URL=https://wrepo.net`
 - `NEXTAUTH_URL_INTERNAL=http://web:3000`
 - `POSTGRES_PASSWORD=<strong random password>`
 - `NEXTAUTH_SECRET=<openssl rand -base64 32>` and do not leave it blank or placeholder
@@ -100,8 +100,8 @@ In the Cloudflare Zero Trust dashboard:
 1. Create a new **Cloudflare Tunnel**
 2. Choose the **Docker** connector type
 3. Copy the generated tunnel token into `.env` as `CLOUDFLARE_TUNNEL_TOKEN`
-4. Add a public hostname for `wrepo.org` with service `http://web:3000`
-5. Add a second public hostname for `www.wrepo.org` with service `http://web:3000` if you want both hostnames live
+4. Add a public hostname for `wrepo.net` with service `http://web:3000`
+5. Add a second public hostname for `www.wrepo.net` with service `http://web:3000` if you want both hostnames live
 
 Notes:
 
@@ -113,8 +113,8 @@ Notes:
 
 DNS:
 
-- `wrepo.org`: proxied through the tunnel
-- `www.wrepo.org`: proxied through the tunnel or redirected to apex if you prefer a single hostname
+- `wrepo.net`: proxied through the tunnel
+- `www.wrepo.net`: proxied through the tunnel or redirected to apex if you prefer a single hostname
 - No direct `A` or `AAAA` record to the home server is needed for the app
 
 SSL/TLS:
@@ -186,13 +186,13 @@ docker compose logs cloudflared --tail 80
 
 Public checks:
 
-- `https://wrepo.org/`
-- `https://wrepo.org/search`
-- `https://wrepo.org/api/papers`
-- `https://wrepo.org/llms.txt`
-- `https://wrepo.org/llms-full.txt`
-- `https://wrepo.org/sitemap.xml`
-- `https://wrepo.org/robots.txt`
+- `https://wrepo.net/`
+- `https://wrepo.net/search`
+- `https://wrepo.net/api/papers`
+- `https://wrepo.net/llms.txt`
+- `https://wrepo.net/llms-full.txt`
+- `https://wrepo.net/sitemap.xml`
+- `https://wrepo.net/robots.txt`
 
 Notes:
 

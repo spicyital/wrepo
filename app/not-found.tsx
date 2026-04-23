@@ -9,7 +9,7 @@ export default function NotFound() {
         The page you are looking for does not exist, or the paper may have been unpublished.
       </p>
       <Link href="/" className="mt-8 inline-block text-accent-600 hover:text-accent-700">
-        ← Back to home
+        Back to home
       </Link>
     </main>
   )

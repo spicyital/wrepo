@@ -15,11 +15,11 @@ export function SignupForm() {
     <main className="mx-auto flex min-h-screen max-w-md items-center px-6">
       <div className="w-full">
         <Link href="/" className="text-xs uppercase tracking-widest text-ink-500 no-underline hover:text-ink-800">
-          ← WRepo
+          Back to WRepo
         </Link>
-        <h1 className="mt-4 font-serif text-3xl text-ink-900">Create account</h1>
+        <h1 className="mt-4 font-serif text-3xl text-ink-900">Create a submitter account</h1>
         <p className="mt-1 text-sm text-ink-500">
-          Create an account to submit work for editorial review.
+          Use this account to submit work for editorial review and repository correspondence.
         </p>
 
         <form action={formAction} className="mt-8 space-y-4">
@@ -52,7 +52,7 @@ export function SignupForm() {
         <p className="mt-4 text-sm text-ink-500">
           Already have an account?{' '}
           <Link href="/login" className="text-accent-600 no-underline hover:text-accent-700">
-            Sign in
+            Repository sign in
           </Link>
           .
         </p>
@@ -66,7 +66,7 @@ function SubmitButton() {
 
   return (
     <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? 'Creating account…' : 'Create account'}
+      {pending ? 'Creating account...' : 'Create submitter account'}
     </Button>
   )
 }

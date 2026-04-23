@@ -45,7 +45,12 @@ export default async function BrowseFacetPage({
 
       <div className="mt-8">
         {papers.length === 0 ? (
-          <p className="py-12 text-center text-sm text-ink-500">No papers match this filter yet.</p>
+          <div className="rounded-xl border border-dashed border-ink-200 bg-ink-50/60 p-8 text-center">
+            <p className="text-sm font-medium text-ink-800">No published records are assigned to this facet.</p>
+            <p className="mt-2 text-sm text-ink-500">
+              Browse facets remain visible only when public records support them.
+            </p>
+          </div>
         ) : (
           papers.map((p) => (
             <PaperCard
@@ -66,22 +71,30 @@ export default async function BrowseFacetPage({
 }
 
 function prettyLabel(facet: string, value: string): string {
+  const label = titleize(value)
   switch (facet) {
     case 'department':
-      return `Department / ${value}`
+      return `Department / ${label}`
     case 'year':
       return `Year / ${value}`
     case 'author':
-      return `Author / ${value}`
+      return `Author / ${label}`
     case 'advisor':
-      return `Advisor / ${value}`
+      return `Advisor / ${label}`
     case 'type':
-      return `Type / ${value.replaceAll('_', ' ')}`
+      return `Type / ${label}`
     case 'keyword':
-      return `Keyword / ${value}`
+      return `Keyword / ${label}`
     default:
-      return value
+      return label
   }
+}
+
+function titleize(value: string): string {
+  return value
+    .replaceAll('_', ' ')
+    .replaceAll('-', ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase())
 }
 
 async function queryByFacet(facet: Facet, value: string) {

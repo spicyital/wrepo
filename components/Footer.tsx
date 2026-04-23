@@ -8,7 +8,7 @@ export function Footer() {
         <div>
           <div className="font-serif text-lg text-ink-900">WRepo</div>
           <p className="mt-2 max-w-xs text-ink-500">
-            A repository for undergraduate theses, student research, and working papers.
+            A public repository for undergraduate theses, student research, and working papers.
           </p>
         </div>
         <div>
@@ -16,7 +16,7 @@ export function Footer() {
           <ul className="space-y-2">
             <li><Link href="/browse" className="no-underline hover:text-ink-900">Browse</Link></li>
             <li><Link href="/search" className="no-underline hover:text-ink-900">Search</Link></li>
-            <li><Link href="/submit" className="no-underline hover:text-ink-900">Submit</Link></li>
+            <li><Link href="/submit" className="no-underline hover:text-ink-900">Submit a paper</Link></li>
           </ul>
         </div>
         <div>

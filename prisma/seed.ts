@@ -11,7 +11,7 @@ import { slugify } from '../lib/slug'
 const db = new PrismaClient()
 
 async function main() {
-  const adminEmail = (process.env.ADMIN_EMAIL ?? 'admin@wrepo.org').toLowerCase()
+  const adminEmail = (process.env.ADMIN_EMAIL ?? 'admin@wrepo.net').toLowerCase()
   const adminPassword = process.env.ADMIN_PASSWORD ?? 'change-me-please'
   const adminName = process.env.ADMIN_NAME ?? 'WRepo Administrator'
 

@@ -19,7 +19,7 @@ export async function Header() {
         <Link href="/" className="flex items-center gap-2 no-underline">
           <span className="font-serif text-xl font-semibold tracking-tight text-ink-900">WRepo</span>
           <span className="hidden text-xs uppercase tracking-widest text-ink-400 md:inline">
-            academic archive
+            public repository
           </span>
         </Link>
         <nav className="flex flex-wrap items-center gap-4 sm:justify-end sm:gap-6">
@@ -37,7 +37,7 @@ export async function Header() {
               href="/submit"
               className="text-sm text-ink-700 no-underline hover:text-ink-900"
             >
-              Submit
+              Submit paper
             </Link>
           )}
           {isEditor ? (
@@ -55,13 +55,13 @@ export async function Header() {
                 href="/signup"
                 className="text-sm text-ink-700 no-underline hover:text-ink-900"
               >
-                Sign up
+                Submitter account
               </Link>
               <Link
                 href="/login"
                 className="rounded-md border border-ink-200 px-3 py-1.5 text-sm text-ink-800 no-underline hover:border-ink-300"
               >
-                Sign in
+                Repository sign in
               </Link>
             </div>
           )}

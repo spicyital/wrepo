@@ -3,20 +3,24 @@ import { contactEmail } from '@/lib/llms'
 
 export const metadata: Metadata = {
   title: 'About',
-  description: 'About WRepo - a self-hosted academic paper repository.',
+  description: 'About WRepo - a public repository for student research and working papers.',
 }
 
 export default function AboutPage() {
   return (
     <article className="mx-auto max-w-3xl px-6 py-16 prose-serif">
       <p className="text-xs uppercase tracking-widest text-ink-500">About</p>
-      <h1 className="mt-2 font-serif text-4xl text-ink-900">A credible home for student research and working papers.</h1>
+      <h1 className="mt-2 font-serif text-4xl text-ink-900">A focused home for student research and working papers.</h1>
 
       <div className="prose prose-ink mt-10 max-w-none text-ink-700">
         <p>
-          WRepo is a self-hosted academic repository for undergraduate theses, student research papers,
+          WRepo is a public academic repository for undergraduate theses, student research papers,
           and working papers. Its purpose is practical: to give publishable work a stable public home
-          with clear metadata, citation support, and a durable URL.
+          with clear metadata, citation support, and durable URLs.
+        </p>
+        <p>
+          <strong>Created by Alessandro Bertucci</strong>. The repository is maintained as focused
+          academic infrastructure for public records, not as a general publishing platform.
         </p>
 
         <h2 className="mt-10 font-serif text-2xl text-ink-900">What is public</h2>

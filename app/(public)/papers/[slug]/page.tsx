@@ -192,7 +192,7 @@ export default async function PaperPage({ params }: { params: { slug: string } }
           ) : pdfUrl ? (
             <PdfPreview src={pdfUrl} title={paper.title} />
           ) : (
-            <p className="text-sm text-ink-500">No PDF attached.</p>
+            <p className="text-sm text-ink-500">No public file is attached to this record.</p>
           )}
         </div>
       </section>

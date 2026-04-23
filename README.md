@@ -78,7 +78,7 @@ scripts/
 docker/
   Dockerfile       Multi-stage build, non-root runtime, tini + healthcheck
   entrypoint.sh    Runs `prisma migrate deploy`, optional admin bootstrap, then next
-  nginx.conf       Example TLS reverse-proxy config for wrepo.org
+  nginx.conf       Example TLS reverse-proxy config for wrepo.net
 middleware.ts      Edge auth guard for /admin/* and /submit
 storage/           Uploaded PDFs and covers (mounted volume in production)
 docs/
@@ -213,7 +213,7 @@ Minimum you must set:
 | ------------------ | ----- |
 | `DATABASE_URL`     | Postgres connection string. Use `db` host when running under Compose, `localhost` locally. |
 | `NEXTAUTH_SECRET`  | Required in production. Generate with `openssl rand -base64 32`. |
-| `NEXTAUTH_URL`     | Full public URL (`https://wrepo.org` in prod). |
+| `NEXTAUTH_URL`     | Full public URL (`https://wrepo.net` in prod). |
 | `APP_URL`          | Public canonical URL used in metadata, sitemap, Open Graph. |
 | `HEALTHCHECK_TOKEN`| Required for the local/container `/api/health` probe in production deployments. |
 | `ADMIN_EMAIL`      | Optional env-based bootstrap admin login. |
@@ -275,7 +275,7 @@ Short version:
 # On the server
 git clone https://github.com/your-org/wrepo.git && cd wrepo
 cp .env.example .env
-# Edit .env: NEXTAUTH_SECRET, NEXTAUTH_URL=https://wrepo.org, APP_URL, POSTGRES_PASSWORD, ADMIN_*
+# Edit .env: NEXTAUTH_SECRET, NEXTAUTH_URL=https://wrepo.net, APP_URL, POSTGRES_PASSWORD, ADMIN_*
 # NEXTAUTH_SECRET is mandatory in production; blank or placeholder values fail closed.
 
 docker compose up -d --build
@@ -284,7 +284,7 @@ docker compose exec web npm run admin:create
 sudo cp docker/nginx.conf /etc/nginx/sites-available/wrepo
 sudo ln -s /etc/nginx/sites-available/wrepo /etc/nginx/sites-enabled/wrepo
 sudo nginx -t && sudo systemctl reload nginx
-sudo certbot --nginx -d wrepo.org -d www.wrepo.org
+sudo certbot --nginx -d wrepo.net -d www.wrepo.net
 ```
 
 The `web` container listens on `127.0.0.1:3000`; the DB on `127.0.0.1:5432`. Nothing is exposed to the public internet directly — Nginx terminates TLS.

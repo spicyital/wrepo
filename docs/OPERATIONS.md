@@ -248,7 +248,7 @@ Symptoms:
 
 Checks:
 
-- `NEXTAUTH_URL=https://wrepo.org`
+- `NEXTAUTH_URL=https://wrepo.net`
 - `NEXTAUTH_URL_INTERNAL=http://web:3000`
 - Cloudflare public hostname points to the right service
 
@@ -277,7 +277,7 @@ Use this after every deploy or rollback:
 
 - `docker compose --profile tunnel ps` shows `web`, `db`, and `cloudflared` healthy/running
 - `curl -fsS -H "X-WRepo-Health-Token: $HEALTHCHECK_TOKEN" http://127.0.0.1:3000/api/health` succeeds
-- home page loads at `https://wrepo.org/`
+- home page loads at `https://wrepo.net/`
 - login works
 - paper submission works
 - upload succeeds and the stored file can be accessed under the expected permissions
@@ -285,7 +285,7 @@ Use this after every deploy or rollback:
 - newly published paper appears on the home page
 - search returns the paper
 - public paper page loads correctly
-- `https://wrepo.org/api/papers` responds
-- `https://wrepo.org/llms.txt` responds
-- `https://wrepo.org/llms-full.txt` responds
-- `https://wrepo.org/sitemap.xml` responds
+- `https://wrepo.net/api/papers` responds
+- `https://wrepo.net/llms.txt` responds
+- `https://wrepo.net/llms-full.txt` responds
+- `https://wrepo.net/sitemap.xml` responds

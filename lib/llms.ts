@@ -33,7 +33,8 @@ export const siteDescription =
   process.env.APP_DESCRIPTION ??
   'Public repository for undergraduate theses, student research papers, and working papers.'
 export const siteBaseUrl = joinUrl('/').replace(/\/$/, '')
-export const contactEmail = 'contact@wrepo.org'
+export const contactEmail = 'contact@wrepo.net'
+export const creatorName = 'Alessandro Bertucci'
 export const aboutUrl = joinUrl('/about')
 export const contactUrl = joinUrl('/about#contact')
 
@@ -199,6 +200,7 @@ export function formatLlmsText() {
     '',
     formatSection('Project', [
       `- Name: ${llmsProject.name}`,
+      `- Creator: ${creatorName}`,
       `- Description: ${llmsProject.description}`,
       `- Base URL: ${llmsProject.baseUrl}`,
       `- About: ${aboutUrl}`,
@@ -225,6 +227,7 @@ export function formatLlmsFullText() {
     '',
     formatSection('Project', [
       `- Name: ${llmsProject.name}`,
+      `- Creator: ${creatorName}`,
       `- Description: ${llmsProject.description}`,
       `- Base URL: ${llmsProject.baseUrl}`,
       `- Repository contents: ${llmsProject.contains}`,

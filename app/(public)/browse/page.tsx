@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 export default async function BrowseIndex() {
-  const [departments, years, authors, advisors, keywords] = await Promise.all([
+  const [departments, years, types, authors, advisors, keywords] = await Promise.all([
     db.department.findMany({
       where: { papers: { some: { status: 'published', deletedAt: null } } },
       orderBy: { name: 'asc' },
@@ -22,6 +22,12 @@ export default async function BrowseIndex() {
       where: { status: 'published', deletedAt: null },
       _count: true,
       orderBy: { year: 'desc' },
+    }),
+    db.paper.groupBy({
+      by: ['documentType'],
+      where: { status: 'published', deletedAt: null },
+      _count: true,
+      orderBy: { documentType: 'asc' },
     }),
     db.author.findMany({
       where: { papers: { some: { paper: { status: 'published', deletedAt: null } } } },
@@ -44,10 +50,10 @@ export default async function BrowseIndex() {
   return (
     <div className="mx-auto max-w-6xl px-6 py-16">
       <p className="text-xs uppercase tracking-widest text-ink-500">Browse</p>
-      <h1 className="mt-2 font-serif text-4xl text-ink-900">Find a paper.</h1>
+      <h1 className="mt-2 font-serif text-4xl text-ink-900">Browse the public archive.</h1>
       <p className="mt-3 max-w-2xl text-ink-600">
-        Browse published papers by department, year, author, advisor, type, or keyword. For full-text
-        queries, use <Link href="/search" className="text-accent-600">search</Link>.
+        Move through published records by department, year, author, advisor, document type, or keyword.
+        For full-text queries, use <Link href="/search" className="text-accent-600">search</Link>.
       </p>
       <div className="mt-6 max-w-2xl">
         <SearchBar />
@@ -55,16 +61,16 @@ export default async function BrowseIndex() {
 
       {!hasPublishedCorpus && (
         <div className="mt-8 rounded-xl border border-dashed border-ink-200 bg-ink-50/60 p-6">
-          <p className="font-medium text-ink-900">No published papers are live yet.</p>
+          <p className="font-medium text-ink-900">The browse index is ready for the first public records.</p>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-500">
-            Browse links will populate automatically once public records are published.
+            Facets are shown only after records are published, so early archive navigation stays concise.
           </p>
         </div>
       )}
 
       <Facet title="Departments">
         {departments.length === 0 ? (
-          <EmptyFacet message="Published departments will appear here once records are available." />
+          <EmptyFacet message="Departments appear here once at least one public record is assigned to them." />
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
             {departments.map((d) => (
@@ -83,7 +89,7 @@ export default async function BrowseIndex() {
 
       <Facet title="By year">
         {years.length === 0 ? (
-          <EmptyFacet message="Publication years will appear here once papers are published." />
+          <EmptyFacet message="Publication years appear as soon as records enter the public archive." />
         ) : (
           <div className="flex flex-wrap gap-2">
             {years.map((y) => (
@@ -92,7 +98,7 @@ export default async function BrowseIndex() {
                 href={`/browse/year/${y.year}`}
                 className="rounded-full border border-ink-100 bg-white px-3 py-1 text-sm text-ink-800 no-underline hover:border-ink-300"
               >
-                {y.year} <span className="text-xs text-ink-500">· {y._count}</span>
+                {y.year} <span className="text-xs text-ink-500">({y._count})</span>
               </Link>
             ))}
           </div>
@@ -100,17 +106,17 @@ export default async function BrowseIndex() {
       </Facet>
 
       <Facet title="By document type">
-        {!hasPublishedCorpus ? (
-          <EmptyFacet message="Document types will appear here once papers are published." />
+        {types.length === 0 ? (
+          <EmptyFacet message="Document types appear once published records are available." />
         ) : (
           <div className="flex flex-wrap gap-2">
-            {['thesis', 'research_paper', 'article', 'report', 'working_paper', 'other'].map((t) => (
+            {types.map((t) => (
               <Link
-                key={t}
-                href={`/browse/type/${t}`}
+                key={t.documentType}
+                href={`/browse/type/${t.documentType}`}
                 className="rounded-full border border-ink-100 bg-white px-3 py-1 text-sm text-ink-800 no-underline capitalize hover:border-ink-300"
               >
-                {t.replaceAll('_', ' ')}
+                {t.documentType.replaceAll('_', ' ')} <span className="text-xs text-ink-500">({t._count})</span>
               </Link>
             ))}
           </div>
@@ -120,20 +126,20 @@ export default async function BrowseIndex() {
       <Facet title="Authors">
         <FacetList
           items={authors.map((a) => ({ href: `/browse/author/${a.slug}`, label: a.name }))}
-          emptyMessage="Published authors will appear here once records are available."
+          emptyMessage="Authors appear here once their work is part of the public archive."
         />
       </Facet>
 
       <Facet title="Advisors">
         <FacetList
           items={advisors.map((a) => ({ href: `/browse/advisor/${a.slug}`, label: a.name }))}
-          emptyMessage="Advisor listings will appear here once published papers are available."
+          emptyMessage="Advisor listings appear here as published records include advisor metadata."
         />
       </Facet>
 
       <Facet title="Keywords">
         {keywords.length === 0 ? (
-          <EmptyFacet message="Keywords will appear here once published papers are tagged." />
+          <EmptyFacet message="Keywords appear once published records include subject tags." />
         ) : (
           <div className="flex flex-wrap gap-2">
             {keywords.map((k) => (
@@ -163,7 +169,7 @@ function Facet({ title, children }: { title: string; children: React.ReactNode }
 
 function FacetList({
   items,
-  emptyMessage = 'Nothing public here yet.',
+  emptyMessage = 'This facet is ready for public records.',
 }: {
   items: { href: string; label: string }[]
   emptyMessage?: string
